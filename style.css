@@ -506,6 +506,10 @@ textarea {
   padding: 0 !important;
 }
 
+body.maze-mode {
+  padding-top: 0 !important;
+}
+
 
 /* =========================
    ⚖️ 푸터
@@ -535,6 +539,7 @@ footer a:hover {
   text-decoration: underline;
   color: #ffdf70;
 }
+
 
 
 
