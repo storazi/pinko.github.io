@@ -211,36 +211,6 @@ SPDX-License-Identifier: MIT
 <!-- 원래 사용하던 app.js 유지 -->
 <script src="./app.js"></script>
 
-<!-- ⭐ 미로 높이 자동 조절 스크립트 -->
-<script>
-function fitMazeHeight() {
-  const wrap = document.getElementById("mazeWrapper");
-  if (!wrap) return;
-
-  const footerSpace = 100;
-  const rectTop = wrap.getBoundingClientRect().top;
-
-  const vh = window.visualViewport
-    ? window.visualViewport.height
-    : window.innerHeight;
-
-  wrap.style.height = (vh - rectTop - footerSpace) + "px";
-}
-
-window.addEventListener("resize", fitMazeHeight);
-window.addEventListener("orientationchange", fitMazeHeight);
-window.visualViewport?.addEventListener("resize", fitMazeHeight);
-
-window.addEventListener("load", () => {
-  setTimeout(fitMazeHeight, 150);
-});
-
-document.getElementById("tabMaze").addEventListener("click", () => {
-  setTimeout(fitMazeHeight, 100);
-});
-</script>
-
-<!-- ⭐ 탭 스크립트 -->
 <script>
   const tabs = {
     tabHome:"homeTab",
@@ -257,27 +227,47 @@ document.getElementById("tabMaze").addEventListener("click", () => {
     if (!btn) return;
 
     btn.addEventListener("click", () => {
+
+      /* 모든 탭 비활성화 */
       document.querySelectorAll(".tab-content").forEach(t =>
         t.classList.remove("active")
       );
+
+      /* 모든 버튼 비활성화 */
       document.querySelectorAll(".sidebar button").forEach(b =>
         b.classList.remove("active")
       );
 
+      /* 선택된 탭 활성화 */
       document.getElementById(tabs[key]).classList.add("active");
       btn.classList.add("active");
 
-      /* ⭐ maze 탭 활성화 시 padding 제거 */
+      /* --------- ⭐ Maze 탭일 때만 상단 공백 제거 --------- */
+
+      const body = document.body;
       const content = document.querySelector("main.content");
+
       if (key === "tabMaze") {
+        /* content padding 제거 */
         content.classList.add("active-maze");
+
+        /* body padding 제거 (진짜 공백 원인) */
+        body.classList.add("maze-mode");
+
+        /* 높이 재계산 */
         setTimeout(fitMazeHeight, 150);
-      } else {
+      } 
+      else {
+        /* 다른 탭 들어가면 되돌림 */
         content.classList.remove("active-maze");
+        body.classList.remove("maze-mode");
       }
+
     });
   });
 </script>
 
+
 </body>
 </html>
+
