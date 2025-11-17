@@ -12,26 +12,36 @@ SPDX-License-Identifier: MIT
   <link rel="stylesheet" href="./style.css">
 
   <style>
-    /* ⭐ 미로 래퍼 스타일 (모바일+PC 완전 대응) */
+    /* ⭐ 미로 전용 wrapper */
     #mazeWrapper {
       width: 100%;
+      height: 100%;
       overflow: hidden;
       border-radius: 12px;
       background: #000;
       position: relative;
+      margin:0;
+      padding:0;
     }
 
-    #mazeWrapper iframe {
+    #mazeFrame {
       width: 100%;
       height: 100%;
-      border: none;
       display: block;
+      border: none;
       background: #000;
+      margin:0;
+      padding:0;
     }
 
-    /* ⭐ maze 탭 활성화 시 content padding 제거 */
+    /* 미로 탭일 때 content padding 제거 */
     .content.active-maze {
       padding-top: 0 !important;
+      padding-bottom: 0 !important;
+    }
+
+    body.maze-mode {
+      padding: 0 !important;
     }
   </style>
 </head>
@@ -80,8 +90,7 @@ SPDX-License-Identifier: MIT
       <section id="ansiTab" class="tab-content">
         <h2>🎨 디스코드 텍스트 생성기</h2>
         <iframe src="./ansi.html"
-          width="100%"
-          height="780"
+          width="100%" height="780"
           style="border:none; border-radius:10px; background:#0b1220;">
         </iframe>
       </section>
@@ -176,20 +185,8 @@ SPDX-License-Identifier: MIT
       <section id="mazeTab" class="tab-content" style="padding:0 !important; margin:0 !important;">
         <h2 style="margin:10px 0 5px 0; padding:0;">🌀 랜덤 미로 게임</h2>
 
-        <div id="mazeWrapper" style="margin:0; padding:0;">
-          <iframe 
-            src="./maze.html"
-            id="mazeFrame"
-            style="
-              width:100%;
-              border:none;
-              border-radius:12px;
-              background:#000;
-              display:block;
-              margin:0;
-              padding:0;
-            ">
-          </iframe>
+        <div id="mazeWrapper">
+          <iframe src="./maze.html" id="mazeFrame"></iframe>
         </div>
 
         <p style="font-size:12px; opacity:0.7; margin:8px 0 0 0; padding:0;">
@@ -206,6 +203,29 @@ SPDX-License-Identifier: MIT
     <br>
     <img src="https://hits.sh/atorazi.github.io/291.svg?color=f3ff00&labelColor=111ca8">
   </footer>
+
+
+<!-- ========================= -->
+<!-- ⭐ fitMazeHeight 함수 추가 -->
+<!-- ========================= -->
+<script>
+function fitMazeHeight() {
+  const wrap = document.getElementById("mazeWrapper");
+  const iframe = document.getElementById("mazeFrame");
+  if (!wrap || !iframe) return;
+
+  const footerSpace = 120;
+  const vh = window.innerHeight;
+  const top = wrap.getBoundingClientRect().top;
+
+  const newHeight = vh - top - footerSpace;
+  wrap.style.height = newHeight + "px";
+  iframe.style.height = newHeight + "px";
+}
+
+window.addEventListener("resize", fitMazeHeight);
+</script>
+
 
 <!-- 원래 사용하던 app.js 유지 -->
 <script src="./app.js"></script>
@@ -227,37 +247,26 @@ SPDX-License-Identifier: MIT
 
     btn.addEventListener("click", () => {
 
-      /* 모든 탭 비활성화 */
       document.querySelectorAll(".tab-content").forEach(t =>
         t.classList.remove("active")
       );
 
-      /* 모든 버튼 비활성화 */
       document.querySelectorAll(".sidebar button").forEach(b =>
         b.classList.remove("active")
       );
 
-      /* 선택된 탭 활성화 */
       document.getElementById(tabs[key]).classList.add("active");
       btn.classList.add("active");
-
-      /* --------- ⭐ Maze 탭일 때만 상단 공백 제거 --------- */
 
       const body = document.body;
       const content = document.querySelector("main.content");
 
       if (key === "tabMaze") {
-        /* content padding 제거 */
         content.classList.add("active-maze");
-
-        /* body padding 제거 (진짜 공백 원인) */
         body.classList.add("maze-mode");
-
-        /* 높이 재계산 */
-        setTimeout(fitMazeHeight, 150);
-      } 
-      else {
-        /* 다른 탭 들어가면 되돌림 */
+        setTimeout(fitMazeHeight, 50);
+        setTimeout(fitMazeHeight, 200);
+      } else {
         content.classList.remove("active-maze");
         body.classList.remove("maze-mode");
       }
@@ -266,8 +275,5 @@ SPDX-License-Identifier: MIT
   });
 </script>
 
-
 </body>
 </html>
-
-
