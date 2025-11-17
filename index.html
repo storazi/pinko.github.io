@@ -168,21 +168,31 @@ SPDX-License-Identifier: MIT
       </section>
 
       <!-- ⭐ 미로 게임 -->
-      <section id="mazeTab" class="tab-content">
-        <h2>🌀 랜덤 미로 게임</h2>
+<section id="mazeTab" class="tab-content" style="padding:0 !important; margin:0 !important;">
+  <h2 style="margin:10px 0 5px 0; padding:0;">🌀 랜덤 미로 게임</h2>
 
-        <div id="mazeWrapper">
-          <iframe 
-            src="./maze.html"
-            id="mazeFrame"
-            style="width:100%; height:500px; border:none; border-radius:12px; display:block;">
-          </iframe>
-        </div>
+  <div id="mazeWrapper" style="margin:0; padding:0;">
+    <iframe 
+      src="./maze.html"
+      id="mazeFrame"
+      style="
+        width:100%;
+        height:500px;     /* ← 너가 원하는 500px */
+        border:none;
+        border-radius:12px;
+        background:#000;
+        display:block;    /* ← iframe 주변 여백 제거 핵심 */
+        margin:0;         /* ← 공백 제거 */
+        padding:0;        /* ← 공백 제거 */
+      ">
+    </iframe>
+  </div>
 
-        <p style="font-size:12px; opacity:0.7; margin-top:6px;">
-          WASD 또는 모바일 방향키로 이동할 수 있습니다.
-        </p>
-      </section>
+  <p style="font-size:12px; opacity:0.7; margin:8px 0 0 0; padding:0;">
+    WASD 또는 모바일 방향키로 이동할 수 있습니다.
+  </p>
+</section>
+
 
     </main>
   </div>
@@ -262,5 +272,6 @@ document.getElementById("tabMaze").addEventListener("click", () => {
 
 </body>
 </html>
+
 
 
