@@ -179,34 +179,42 @@ SPDX-License-Identifier: MIT
     <img src="https://hits.sh/atorazi.github.io/291.svg?color=f3ff00&labelColor=111ca8">
   </footer>
 
-  <!-- 원래 사용하던 app.js 유지 -->
-  <script src="./app.js"></script>
+<!-- 원래 사용하던 app.js 유지 -->
+<script src="./app.js"></script>
 
-  <!-- ⭐ 탭 스크립트만 추가 -->
-  <script>
-    const tabs = {
-      tabHome:"homeTab",
-      tabAnsi:"ansiTab",
-      tabSim:"simTab",
-      tabExp:"expTab",
-      tabEnhance:"enhanceTab",
-      tabGrowth:"growthTab",
-      tabMaze:"mazeTab"  
-    };
+<script>
+  window.addEventListener("resize", () => {
+    const frame = document.querySelector("#mazeTab iframe");
+    if (frame) {
+      frame.style.height = `calc(100vh - 180px)`;
+    }
+  });
+</script>
 
-    Object.keys(tabs).forEach(key => {
-      const btn = document.getElementById(key);
-      if (!btn) return;
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
-        document.querySelectorAll(".sidebar button").forEach(b => b.classList.remove("active"));
+<!-- ⭐ 탭 스크립트 추가 -->
+<script>
+  const tabs = {
+    tabHome:"homeTab",
+    tabAnsi:"ansiTab",
+    tabSim:"simTab",
+    tabExp:"expTab",
+    tabEnhance:"enhanceTab",
+    tabGrowth:"growthTab",
+    tabMaze:"mazeTab"
+  };
 
-        document.getElementById(tabs[key]).classList.add("active");
-        btn.classList.add("active");
-      });
+  Object.keys(tabs).forEach(key => {
+    const btn = document.getElementById(key);
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".sidebar button").forEach(b => b.classList.remove("active"));
+
+      document.getElementById(tabs[key]).classList.add("active");
+      btn.classList.add("active");
     });
-  </script>
+  });
+</script>
+
 </body>
 </html>
-
-
