@@ -110,7 +110,26 @@ SPDX-License-Identifier: MIT
       }
     }
 
+/* ================================
+   🖥 PC 버전 — 미로 크기 제한
+   ================================*/
+@media (min-width: 821px) {
+  #mazeWrapper {
+    display: flex;
+    justify-content: center; /* 가운데 정렬 */
+    align-items: center;
+    width: 100%;
+  }
 
+  #mazeWrapper iframe {
+    width: 600px;       /* 고정 너비 */
+    height: 600px;      /* 고정 높이 */
+    max-width: 600px;
+    max-height: 600px;
+    border-radius: 12px;
+    display: block;
+  }
+}
   </style>
 </head>
 
@@ -287,4 +306,5 @@ SPDX-License-Identifier: MIT
 
 </body>
 </html>
+
 
