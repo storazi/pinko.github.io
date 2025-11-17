@@ -7,139 +7,48 @@ SPDX-License-Identifier: MIT
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-
-  <!-- ⭐ 모바일 확대·축소 완전 허용 -->
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0,
-                 maximum-scale=5.0, user-scalable=yes">
-
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>🐂 미궁 시뮬레이터</title>
   <link rel="stylesheet" href="./style.css">
 
   <style>
-    /* ==========================
-       ⭐ 기본 모바일 대응 구조
-       ==========================*/
-    body, html {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow-x: hidden;
-    }
-
-    .container {
-      display: flex;
-      width: 100%;
-      min-height: 100vh;
-    }
-
-    /* ==========================
-       ⭐ 사이드바 (PC)
-       ==========================*/
-    .sidebar {
-      width: 230px;
-      flex-shrink: 0;
-      background: #0f1e3a;
-      padding: 15px;
-      border-right: 1px solid #1e396e;
-    }
-
-    /* ==========================
-       ⭐ 모바일 전용 사이드바
-       ==========================*/
-    @media (max-width: 820px) {
-      .container {
-        flex-direction: column;
-      }
-
-      .sidebar {
-        width: 100%;
-        display: flex;
-        overflow-x: auto;
-        white-space: nowrap;
-        border-right: none;
-        border-bottom: 1px solid #1e396e;
-      }
-
-      .sidebar button {
-        flex: 1 0 auto;
-        margin-right: 6px;
-      }
-    }
-
-    /* ==========================
-       ⭐ 콘텐츠 영역
-       ==========================*/
-    main.content {
-      flex: 1;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow-x: hidden;
-    }
-
-    /* Maze 탭일 때 여백 제거 */
-    main.content.active-maze {
-      padding: 0 !important;
-    }
-
-    /* ==========================
-       ⭐ 미로 iframe 래퍼 (완전 반응형)
-       ==========================*/
+    /* ⭐ 미로 전용 wrapper */
     #mazeWrapper {
       width: 100%;
-      margin: 0;
-      padding: 0;
+      height: 100%;
       overflow: hidden;
-    }
-
-    /* ⭐ 모바일에서 iframe 자동 축소 */
-    #mazeWrapper iframe {
-      width: 100%;
-      height: auto;
-      aspect-ratio: 1 / 1;
-      border: none;
       border-radius: 12px;
+      background: #000;
+      position: relative;
+      margin:0;
+      padding:0;
+    }
+
+    #mazeFrame {
+      width: 100%;
+      height: 100%;
       display: block;
+      border: none;
+      background: #000;
+      margin:0;
+      padding:0;
     }
 
-    /* 📌 모바일에서 높이 재조정 필요 */
-    @media (max-width: 820px) {
-      #mazeWrapper iframe {
-        aspect-ratio: 1/1;
-      }
+    /* 미로 탭일 때 content padding 제거 */
+    .content.active-maze {
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
     }
 
-/* ================================
-   🖥 PC 버전 — 미로 크기 제한
-   ================================*/
-@media (min-width: 821px) {
-  #mazeWrapper {
-    display: flex;
-    justify-content: center; /* 가운데 정렬 */
-    align-items: center;
-    width: 100%;
-  }
-
-  #mazeWrapper iframe {
-    width: 600px;       /* 고정 너비 */
-    height: 600px;      /* 고정 높이 */
-    max-width: 600px;
-    max-height: 600px;
-    border-radius: 12px;
-    display: block;
-  }
-}
+    body.maze-mode {
+      padding: 0 !important;
+    }
   </style>
 </head>
 
 <body>
-
   <div class="container">
-
-    <!-- =============================
-         📂 왼쪽 사이드바
-         ============================= -->
+    <!-- 📂 왼쪽 탭 -->
     <nav class="sidebar">
       <button id="tabHome" class="active">🏠 홈</button>
       <button id="tabAnsi">🎨 디스코드 텍스트</button>
@@ -147,19 +56,14 @@ SPDX-License-Identifier: MIT
       <button id="tabExp">📘 경험치 계산기</button>
       <button id="tabEnhance">🪄 강화 시뮬레이터</button>
       <button id="tabGrowth">📊 성장률 계산기</button>
-      <button onclick="window.location.href='/291/simulator.html'">
-        ⚔️ 전투 시뮬레이터
-      </button>
+      <button onclick="window.location.href='/291/simulator.html'">⚔️ 전투 시뮬레이터</button>
       <button id="tabMaze">🌀 미로 게임</button>
     </nav>
 
-
-    <!-- =============================
-         📈 오른쪽 콘텐츠
-         ============================= -->
+    <!-- 📈 오른쪽 콘텐츠 -->
     <main class="content">
 
-      <!-- 🏠 홈 -->
+      <!-- 🏠 홈 소개 -->
       <section id="homeTab" class="tab-content active">
         <h2>🐂 미궁 시뮬레이터</h2>
         <p>
@@ -178,20 +82,20 @@ SPDX-License-Identifier: MIT
 
         <p style="margin-top:20px; font-size:14px; color:#9aa;">
           제작: <b>storazi, discord : 지원(sub_bot)</b> ｜ 
-          <a href="https://github.com/atorazi" target="_blank" style="color:#ffd447;">GitHub</a>
+          <a href="https://github.com/atorazi" target="_blank" style="color:#ffd447;">GitHub 바로가기</a>
         </p>
       </section>
 
-
-      <!-- 🎨 ANSI 텍스트 -->
+      <!-- 🎨 디스코드 ANSI 텍스트 생성기 -->
       <section id="ansiTab" class="tab-content">
         <h2>🎨 디스코드 텍스트 생성기</h2>
         <iframe src="./ansi.html"
-                style="width:100%; height:780px; border:none;"></iframe>
+          width="100%" height="780"
+          style="border:none; border-radius:10px; background:#0b1220;">
+        </iframe>
       </section>
 
-
-      <!-- 🐾 초기치 -->
+      <!-- 🐾 초기치 시뮬레이터 -->
       <section id="simTab" class="tab-content">
         <h2>🐾 초기치 시뮬레이터</h2>
         <input id="petName" placeholder="펫 이름 입력">
@@ -206,12 +110,11 @@ SPDX-License-Identifier: MIT
         <div id="costDisplay">💰 총 소모: 0원</div>
       </section>
 
-
-      <!-- 📘 경험치 -->
+      <!-- 📘 경험치 계산기 -->
       <section id="expTab" class="tab-content">
         <h2>📘 경험치 계산기</h2>
         <input id="currentLevel" placeholder="현재 레벨">
-        <input id="currentPercent" placeholder="현재 %">
+        <input id="currentPercent" placeholder="현재 % (선택)">
         <input id="targetLevel" placeholder="목표 레벨">
         <input id="xpPerHour" placeholder="시간당 경험치량">
         <button id="run">계산하기</button>
@@ -224,87 +127,153 @@ SPDX-License-Identifier: MIT
         </div>
       </section>
 
-
-      <!-- 🪄 강화 -->
+      <!-- 🪄 강화 시뮬레이터 -->
       <section id="enhanceTab" class="tab-content">
-        <!-- (기존 내용 그대로 유지됨) -->
-      </section>
+        <h2>🪄 강화 시뮬레이터</h2>
 
-
-      <!-- 📊 성장률 -->
-      <section id="growthTab" class="tab-content">
-        <!-- (기존 내용 그대로 유지됨) -->
-      </section>
-
-
-      <!-- 🌀 미로 -->
-      <section id="mazeTab" class="tab-content" style="padding:0; margin:0;">
-        <h2 style="margin:10px 0 5px 0;">🌀 랜덤 미로 게임</h2>
-
-        <div id="mazeWrapper">
-          <iframe id="mazeFrame" src="./maze.html"></iframe>
+        <div class="equip-group">
+          <button class="equip selected" data-type="weapon">⚔️ 무기</button>
+          <button class="equip" data-type="armor">🛡️ 방어구</button>
         </div>
 
-        <p style="font-size:12px; opacity:0.7; margin:8px 0;">
-          WASD / 방향키 / 모바일 조이스틱 지원
+        <h3>🧊 큐브 선택</h3>
+        <button class="cube selected" data-rate="0" data-mult="1" data-rare="false">일반 큐브 (+0%)</button>
+        <button class="cube" data-rate="0.05" data-mult="2" data-rare="true">레어 큐브 (+5%)</button>
+
+        <h3 style="margin-top:20px;">💎 보조제 선택</h3>
+        <div class="booster-line">
+          <button class="booster selected" data-bonus="0">없음</button>
+          <button class="booster" data-bonus="0.05">+5%</button>
+          <button class="booster" data-bonus="0.10">+10%</button>
+          <button class="booster" data-bonus="0.15">+15%</button>
+          <button class="booster" data-bonus="0.20">+20%</button>
+        </div>
+
+        <h3 style="margin-top:20px;">💰 누적 소모 스톤</h3>
+        <div id="totalCost">0 S</div>
+
+        <div style="margin-top:15px;">
+          <button id="upgradeBtn">강화하기</button>
+          <button id="resetBtn">초기화</button>
+        </div>
+
+        <div style="margin-top:10px;">
+          <button id="sim6">+6까지</button>
+          <button id="sim8">+8까지</button>
+          <button id="sim10">+10까지</button>
+        </div>
+
+        <p id="level">현재 강화 단계: +0</p>
+        <div id="status"></div>
+        <textarea id="enhanceOutput" rows="10" readonly></textarea>
+      </section>
+
+      <!-- 📊 성장률 계산기 -->
+      <section id="growthTab" class="tab-content">
+        <h2>📊 성장률 계산기</h2>
+        <input id="growthName" placeholder="펫 이름 입력">
+        <input id="growthLevel" placeholder="현재 레벨 (예: 30)">
+        <input id="growthHP" placeholder="체력(HP)">
+        <input id="growthAtk" placeholder="공격력(Atk)">
+        <input id="growthDef" placeholder="방어력(Def)">
+        <input id="growthAgi" placeholder="순발력(Agi)">
+        <button id="growthRun">성장률 조회</button>
+        <div id="growthResult" class="growth-table"></div>
+      </section>
+
+      <!-- ⭐ 미로 게임 -->
+      <section id="mazeTab" class="tab-content" style="padding:0 !important; margin:0 !important;">
+        <h2 style="margin:10px 0 5px 0; padding:0;">🌀 랜덤 미로 게임</h2>
+
+        <div id="mazeWrapper">
+          <iframe src="./maze.html" id="mazeFrame"></iframe>
+        </div>
+
+        <p style="font-size:12px; opacity:0.7; margin:8px 0 0 0; padding:0;">
+          WASD 또는 모바일 방향키로 이동할 수 있습니다.
         </p>
       </section>
 
     </main>
   </div>
 
-
   <footer>
-    © 2025 <strong>storazi</strong>  
-    <br>Licensed under MIT  
+    © 2025 <strong>storazi</strong>. All rights reserved.<br>
+    Licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a>.
     <br>
     <img src="https://hits.sh/atorazi.github.io/291.svg?color=f3ff00&labelColor=111ca8">
   </footer>
 
-  <!-- 기존 app.js 그대로 유지 -->
-  <script src="./app.js"></script>
 
-  <script>
-    /* ⭐ 탭 시스템 유지 + maze 전용 패딩 제거 */
-    const tabs = {
-      tabHome:"homeTab",
-      tabAnsi:"ansiTab",
-      tabSim:"simTab",
-      tabExp:"expTab",
-      tabEnhance:"enhanceTab",
-      tabGrowth:"growthTab",
-      tabMaze:"mazeTab"
-    };
+<!-- ========================= -->
+<!-- ⭐ fitMazeHeight 함수 추가 -->
+<!-- ========================= -->
+<script>
+function fitMazeHeight() {
+  const wrap = document.getElementById("mazeWrapper");
+  const iframe = document.getElementById("mazeFrame");
+  if (!wrap || !iframe) return;
 
-    Object.keys(tabs).forEach(key => {
-      const btn = document.getElementById(key);
-      if (!btn) return;
+  const footerSpace = 120;
+  const vh = window.innerHeight;
+  const top = wrap.getBoundingClientRect().top;
 
-      btn.addEventListener("click", () => {
+  const newHeight = vh - top - footerSpace;
+  wrap.style.height = newHeight + "px";
+  iframe.style.height = newHeight + "px";
+}
 
-        /* 모든 탭 비활성화 */
-        document.querySelectorAll(".tab-content")
-                .forEach(t => t.classList.remove("active"));
+window.addEventListener("resize", fitMazeHeight);
+</script>
 
-        document.querySelectorAll(".sidebar button")
-                .forEach(b => b.classList.remove("active"));
 
-        /* 선택 탭 활성화 */
-        document.getElementById(tabs[key]).classList.add("active");
-        btn.classList.add("active");
+<!-- 원래 사용하던 app.js 유지 -->
+<script src="./app.js"></script>
 
-        /* ⭐ Maze 탭 전용 처리 */
-        const content = document.querySelector("main.content");
-        if (key === "tabMaze") {
-          content.classList.add("active-maze");
-        } else {
-          content.classList.remove("active-maze");
-        }
-      });
+<script>
+  const tabs = {
+    tabHome:"homeTab",
+    tabAnsi:"ansiTab",
+    tabSim:"simTab",
+    tabExp:"expTab",
+    tabEnhance:"enhanceTab",
+    tabGrowth:"growthTab",
+    tabMaze:"mazeTab"
+  };
+
+  Object.keys(tabs).forEach(key => {
+    const btn = document.getElementById(key);
+    if (!btn) return;
+
+    btn.addEventListener("click", () => {
+
+      document.querySelectorAll(".tab-content").forEach(t =>
+        t.classList.remove("active")
+      );
+
+      document.querySelectorAll(".sidebar button").forEach(b =>
+        b.classList.remove("active")
+      );
+
+      document.getElementById(tabs[key]).classList.add("active");
+      btn.classList.add("active");
+
+      const body = document.body;
+      const content = document.querySelector("main.content");
+
+      if (key === "tabMaze") {
+        content.classList.add("active-maze");
+        body.classList.add("maze-mode");
+        setTimeout(fitMazeHeight, 50);
+        setTimeout(fitMazeHeight, 200);
+      } else {
+        content.classList.remove("active-maze");
+        body.classList.remove("maze-mode");
+      }
+
     });
-  </script>
+  });
+</script>
 
 </body>
 </html>
-
-
