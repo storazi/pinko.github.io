@@ -3,32 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <title>미로</title>
-<style>
-body {
-  background:#0b1426;
-  color:#eaf2ff;
-  font-family:"Pretendard",sans-serif;
-  text-align:center;
-  padding:20px;
-}
-#mazeCanvas {
-  border:3px solid #1e396e;
-  background:#0a1225;
-  border-radius:8px;
-}
-button {
-  padding:8px 16px;
-  border-radius:8px;
-  border:none;
-  background:#ffd447;
-  color:#1a1300;
-  font-weight:700;
-  cursor:pointer;
-  margin-bottom:15px;
-}
-button:hover{opacity:0.9}
 
-/* === 모바일 조이스틱 === */
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+  background: #0b1426;
+  color: #eaf2ff;
+  font-family: "Pretendard", sans-serif;
+  text-align: center;
+}
+
+/* 캔버스: 화면 전체에 맞게 */
+#mazeCanvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  border: 3px solid #1e396e;
+  background: #0a1225;
+  border-radius: 8px;
+}
+
+/* 버튼 */
+#generateBtn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #ffd447;
+  color: #1a1300;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 10px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 50;
+}
+#generateBtn:hover { opacity: 0.9; }
+
+/* 모바일 조이스틱 */
 #joystick {
   position: fixed;
   bottom: 40px;
@@ -54,33 +69,51 @@ button:hover{opacity:0.9}
 }
 </style>
 </head>
+
 <body>
 
-<h2>미로</h2>
 <button id="generateBtn">🔄 새로운 미로 생성</button>
-<br>
-<canvas id="mazeCanvas" width="600" height="600"></canvas>
+
+<canvas id="mazeCanvas"></canvas>
 
 <!-- 모바일 조이스틱 -->
-<div id="joystick">
-  <div id="stick"></div>
-</div>
+<div id="joystick"><div id="stick"></div></div>
 
 <script>
 // =========================
-// 전역 변수
+// 기본 캔버스 설정 (반응형)
 // =========================
 const canvas = document.getElementById("mazeCanvas");
 const ctx = canvas.getContext("2d");
 
+function resizeCanvas() {
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+
+  // cellSize를 새 크기에 맞게 재계산
+  cellSize = Math.floor(canvas.width / cols);
+  if (cellSize * rows > canvas.height) {
+    cellSize = Math.floor(canvas.height / rows);
+  }
+
+  drawMaze();
+}
+
+window.addEventListener("resize", resizeCanvas);
+
+
+// =========================
+// 전역 변수
+// =========================
 let rows = 25;
 let cols = 25;
-let cellSize = canvas.width / cols;
+let cellSize = 0;
 
 let grid = [];
 let stack = [];
 let player = { r: 0, c: 0 };
 let exit = { r: rows - 1, c: cols - 1 };
+
 
 // =========================
 // 셀 생성
@@ -96,6 +129,7 @@ class Cell {
   draw() {
     const x = this.c * cellSize;
     const y = this.r * cellSize;
+
     ctx.strokeStyle = "#eaf2ff";
     ctx.lineWidth = 2;
 
@@ -112,6 +146,7 @@ function drawLine(x1,y1,x2,y2){
   ctx.lineTo(x2,y2);
   ctx.stroke();
 }
+
 
 // =========================
 // DFS 미로 생성기
@@ -170,24 +205,30 @@ function removeWalls(a, b) {
   else if (dy === -1) { a.walls.bottom = false; b.walls.top = false; }
 }
 
+
 // =========================
 // 미로 그리기
 // =========================
 function drawMaze() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   grid.forEach(row => row.forEach(cell => cell.draw()));
 
   // 플레이어
-  drawCircle(player.c * cellSize + cellSize/2,
-             player.r * cellSize + cellSize/2,
-             cellSize/3,
-             "#68c3ff");
+  drawCircle(
+    player.c * cellSize + cellSize/2,
+    player.r * cellSize + cellSize/2,
+    cellSize/3,
+    "#68c3ff"
+  );
 
   // 출구
-  drawCircle(exit.c * cellSize + cellSize/2,
-             exit.r * cellSize + cellSize/2,
-             cellSize/3,
-             "#ffd447");
+  drawCircle(
+    exit.c * cellSize + cellSize/2,
+    exit.r * cellSize + cellSize/2,
+    cellSize/3,
+    "#ffd447"
+  );
 }
 
 function drawCircle(x,y,r,color){
@@ -197,20 +238,38 @@ function drawCircle(x,y,r,color){
   ctx.fill();
 }
 
+
 // =========================
-// 이동 처리 (WASD + 조이스틱 이벤트)
+// 이동 처리 (WASD + 방향키 + 조이스틱)
 // =========================
 document.addEventListener("keydown", (e) => {
+  let key = e.key;
   let cell = grid[player.r][player.c];
-  
-  if ((e.key === "w" || e.key === "W") && !cell.walls.top) player.r--;
-  if ((e.key === "s" || e.key === "S") && !cell.walls.bottom) player.r++;
-  if ((e.key === "a" || e.key === "A") && !cell.walls.left) player.c--;
-  if ((e.key === "d" || e.key === "D") && !cell.walls.right) player.c++;
+
+  // 위쪽 이동 (W, ArrowUp)
+  if ((key === "w" || key === "W" || key === "ArrowUp") && !cell.walls.top) {
+    player.r--;
+  }
+
+  // 아래 이동 (S, ArrowDown)
+  if ((key === "s" || key === "S" || key === "ArrowDown") && !cell.walls.bottom) {
+    player.r++;
+  }
+
+  // 왼쪽 이동 (A, ArrowLeft)
+  if ((key === "a" || key === "A" || key === "ArrowLeft") && !cell.walls.left) {
+    player.c--;
+  }
+
+  // 오른쪽 이동 (D, ArrowRight)
+  if ((key === "d" || key === "D" || key === "ArrowRight") && !cell.walls.right) {
+    player.c++;
+  }
 
   drawMaze();
   checkWin();
 });
+
 
 // =========================
 // 승리 체크
@@ -223,18 +282,21 @@ function checkWin() {
   }
 }
 
+
 // =========================
-// 초기 실행
+// 게임 초기화
 // =========================
 function newGame() {
   generateMaze();
   player = { r: 0, c: 0 };
   exit = { r: rows - 1, c: cols - 1 };
+  resizeCanvas();
   drawMaze();
 }
 
 document.getElementById("generateBtn").onclick = newGame;
 newGame();
+
 
 // ==========================
 // 🕹 조이스틱 입력 처리
@@ -255,7 +317,7 @@ function simulateKey(key){
 }
 
 function handleDirection(dx, dy){
-  const min = 20; // 최소 드래그 거리
+  const min = 20;
   if(Math.abs(dx) < min && Math.abs(dy) < min) return;
 
   if(Math.abs(dx) > Math.abs(dy)){
@@ -267,7 +329,6 @@ function handleDirection(dx, dy){
   }
 }
 
-// 드래그 시작
 joy.addEventListener("pointerdown", e=>{
   dragging = true;
   joyCenter = {
@@ -276,7 +337,6 @@ joy.addEventListener("pointerdown", e=>{
   };
 });
 
-// 드래그 중
 document.addEventListener("pointermove", e=>{
   if(!dragging) return;
 
@@ -296,12 +356,12 @@ document.addEventListener("pointermove", e=>{
   handleDirection(dx, dy);
 });
 
-// 드래그 종료
-document.addEventListener("pointerup", e=>{
+document.addEventListener("pointerup", ()=>{
   dragging = false;
   stick.style.left = "40px";
   stick.style.top  = "40px";
 });
 </script>
+
 </body>
 </html>
