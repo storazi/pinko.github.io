@@ -510,6 +510,9 @@ body.maze-mode {
   padding-top: 0 !important;
 }
 
+.content.active-maze {
+  overflow-y: hidden !important;   /* 스크롤 제거 */
+}
 
 /* =========================
    ⚖️ 푸터
@@ -539,6 +542,7 @@ footer a:hover {
   text-decoration: underline;
   color: #ffdf70;
 }
+
 
 
 
