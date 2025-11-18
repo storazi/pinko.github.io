@@ -10,36 +10,6 @@ SPDX-License-Identifier: MIT
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>🐂 미궁 시뮬레이터</title>
   <link rel="stylesheet" href="./style.css">
-
-  <style>
-    #omokWrapper {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      border-radius: 12px;
-      background: #000;
-      margin:0;
-      padding:0;
-    }
-
-    #omokFrame {
-      width: 100%;
-      height: 100%;
-      border: none;
-      background: #000;
-      margin:0;
-      padding:0;
-    }
-
-    .content.active-omok {
-      padding-top: 0 !important;
-      padding-bottom: 0 !important;
-    }
-
-    body.omok-mode {
-      padding: 0 !important;
-    }
-  </style>
 </head>
 
 <body>
@@ -51,8 +21,12 @@ SPDX-License-Identifier: MIT
       <button id="tabAnsi">🎨 디스코드 텍스트</button>
       <button id="tabExp">📘 경험치 계산기</button>
       <button id="tabGrowth">📊 성장률 계산기</button>
+
+      <!-- ⭐ 새 창으로 오목 AI 열기 -->
+      <button onclick="window.open('/291/omok/index.html', '_blank')">⭕ 오목 AI</button>
+
+      <!-- 전투 시뮬레이터(기존 유지) -->
       <button onclick="window.location.href='/291/simulator.html'">⚔️ 전투 시뮬레이터</button>
-      <button id="tabOmok">⭕ 오목 AI</button>
     </nav>
 
     <!-- 📈 메인 콘텐츠 -->
@@ -70,7 +44,7 @@ SPDX-License-Identifier: MIT
           <li>📊 성장률 계산기</li>
           <li>🎨 디스코드 ANSI 텍스트 생성기</li>
           <li>⚔️ 전투 시뮬레이터</li>
-          <li>⭕ 오목 AI</li>
+          <li>⭕ 오목 AI (새 창)</li>
         </ul>
 
         <p style="margin-top:20px; font-size:14px; color:#9aa;">
@@ -93,7 +67,6 @@ SPDX-License-Identifier: MIT
         <input id="currentPercent" placeholder="현재 % (선택)">
         <input id="targetLevel" placeholder="목표 레벨">
         <input id="xpPerHour" placeholder="시간당 경험치량">
-
         <button id="run">계산하기</button>
         <button id="reset">초기화</button>
 
@@ -118,13 +91,6 @@ SPDX-License-Identifier: MIT
         <div id="growthResult" class="growth-table"></div>
       </section>
 
-      <!-- ⭕ 오목 AI -->
-      <section id="omokTab" class="tab-content" style="padding:0;">
-        <div id="omokWrapper">
-          <iframe src="/291/omok/index.html" id="omokFrame"></iframe>
-        </div>
-      </section>
-
     </main>
   </div>
 
@@ -133,24 +99,6 @@ SPDX-License-Identifier: MIT
     <img src="https://hits.sh/atorazi.github.io/291.svg?color=f3ff00&labelColor=111ca8">
   </footer>
 
-<script>
-function fitOmokHeight() {
-  const wrap = document.getElementById("omokWrapper");
-  const iframe = document.getElementById("omokFrame");
-  if (!wrap || !iframe) return;
-
-  const footerSpace = 120;
-  const vh = window.innerHeight;
-  const top = wrap.getBoundingClientRect().top;
-
-  const newHeight = vh - top - footerSpace;
-  wrap.style.height = newHeight + "px";
-  iframe.style.height = newHeight + "px";
-}
-
-window.addEventListener("resize", fitOmokHeight);
-</script>
-
 <script src="./app.js"></script>
 
 <script>
@@ -158,8 +106,7 @@ window.addEventListener("resize", fitOmokHeight);
     tabHome:"homeTab",
     tabAnsi:"ansiTab",
     tabExp:"expTab",
-    tabGrowth:"growthTab",
-    tabOmok:"omokTab"
+    tabGrowth:"growthTab"
   };
 
   Object.keys(tabs).forEach(key => {
@@ -168,28 +115,14 @@ window.addEventListener("resize", fitOmokHeight);
 
     btn.addEventListener("click", () => {
 
-      document.querySelectorAll(".tab-content").forEach(t =>
-        t.classList.remove("active")
-      );
+      document.querySelectorAll(".tab-content")
+        .forEach(t => t.classList.remove("active"));
 
-      document.querySelectorAll(".sidebar button").forEach(b =>
-        b.classList.remove("active")
-      );
+      document.querySelectorAll(".sidebar button")
+        .forEach(b => b.classList.remove("active"));
 
       document.getElementById(tabs[key]).classList.add("active");
       btn.classList.add("active");
-
-      const body = document.body;
-      const content = document.querySelector("main.content");
-
-      if (key === "tabOmok") {
-        content.classList.add("active-omok");
-        body.classList.add("omok-mode");
-        setTimeout(fitOmokHeight, 50);
-      } else {
-        content.classList.remove("active-omok");
-        body.classList.remove("omok-mode");
-      }
 
     });
   });
