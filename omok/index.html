@@ -187,48 +187,38 @@ let aiColor    = WHITE;
 let turn       = BLACK;
 let gameOver   = false;
 
-let ghost; // 미리보기 돌 엘리먼트
+let ghost;
 
-/* ============================
-   초기 실행
-============================ */
+/* ========== 초기 실행 ========== */
 window.onload = () => {
   ghost = document.getElementById("ghostStone");
   document.getElementById("resetBtn").onclick = startGame;
   startGame();
 };
 
-/* ============================
-   게임 시작 / 재시작
-============================ */
+/* ========== 게임 시작 ========== */
 function startGame() {
   initBoard();
   createBoardUI();
   renderBoard();
 
   const first = document.querySelector("input[name=firstPlayer]:checked").value;
+
   humanColor = (first === "human" ? BLACK : WHITE);
   aiColor    = (humanColor === BLACK ? WHITE : BLACK);
 
   turn = BLACK;
   gameOver = false;
-  setStatus("새 게임이 시작되었습니다.");
+  setStatus("새 게임 시작!");
 
-  if (first === "ai") {
-    aiStartMove();
-  }
+  if (first === "ai") aiStartMove();
 }
 
-/* ============================
-   보드 데이터 초기화
-============================ */
+/* ========== 보드 생성 ========== */
 function initBoard() {
   board = Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
 }
 
-/* ============================
-   클릭 포인트 UI 생성
-============================ */
 function createBoardUI() {
   const bd = document.getElementById("board");
   bd.innerHTML = "";
@@ -241,7 +231,6 @@ function createBoardUI() {
       p.dataset.x = x;
       p.dataset.y = y;
 
-      // 퍼센트 좌표 (반응형)
       p.style.left = ((x + 0.5) * (100 / SIZE)) + "%";
       p.style.top  = ((y + 0.5) * (100 / SIZE)) + "%";
 
@@ -254,13 +243,10 @@ function createBoardUI() {
   }
 }
 
-/* ============================
-   보드 렌더링
-============================ */
+/* ========== 렌더링 ========== */
 function renderBoard() {
   const bd = document.getElementById("board");
 
-  // 돌 / 금수 초기화
   document.querySelectorAll(".stone").forEach(s => s.remove());
   document.querySelectorAll(".ban").forEach(b => b.remove());
 
@@ -268,7 +254,6 @@ function renderBoard() {
     for (let x = 0; x < SIZE; x++) {
       const v = board[y][x];
 
-      // 돌 렌더링
       if (v === BLACK || v === WHITE) {
         const s = document.createElement("div");
         s.className = "stone " + (v === BLACK ? "black" : "white");
@@ -277,7 +262,6 @@ function renderBoard() {
         bd.appendChild(s);
       }
 
-      // 금수 표시 (현재 턴이 흑일 때만)
       if (turn === BLACK && v === EMPTY && isForbidden(board, x, y)) {
         const b = document.createElement("div");
         b.className = "ban";
@@ -290,12 +274,9 @@ function renderBoard() {
   }
 }
 
-/* ============================
-   미리보기 돌 (hover)
-============================ */
+/* ========== 미리보기 돌 ========== */
 function onHover(e) {
-  if (gameOver) return;
-  if (turn !== humanColor) return;
+  if (gameOver || turn !== humanColor) return;
 
   const x = +e.target.dataset.x;
   const y = +e.target.dataset.y;
@@ -312,12 +293,9 @@ function onHover(e) {
   }
 }
 
-/* ============================
-   사람 착수
-============================ */
+/* ========== 사람 착수 ========== */
 function onHumanClick(e) {
-  if (gameOver) return;
-  if (turn !== humanColor) return;
+  if (gameOver || turn !== humanColor) return;
 
   const x = +e.target.dataset.x;
   const y = +e.target.dataset.y;
@@ -333,8 +311,8 @@ function onHumanClick(e) {
   ghost.style.opacity = 0;
 
   if (checkWin(humanColor)) {
-    setStatus("🎉 당신의 승리!");
     gameOver = true;
+    setStatus("🎉 당신의 승리!");
     renderBoard();
     return;
   }
@@ -344,21 +322,17 @@ function onHumanClick(e) {
   aiStartMove();
 }
 
-/* ============================
-   돌 놓기
-============================ */
+/* ========== 돌 놓기 ========== */
 function placeStone(x, y, color) {
   board[y][x] = color;
 }
 
-/* ============================
-   AI 착수 시작
-============================ */
+/* ========== AI 착수 ========== */
 async function aiStartMove() {
   if (gameOver) return;
 
   setStatus("AI 생각 중...");
-  await new Promise(r => setTimeout(r, 80));
+  await new Promise(r => setTimeout(r, 90));
 
   const diff = document.querySelector("input[name=difficulty]:checked").value;
   let mv = (diff === "normal" ? aiMove_B() : aiMove_C());
@@ -368,7 +342,6 @@ async function aiStartMove() {
     return;
   }
 
-  // 금수 회피
   if (aiColor === BLACK && isForbidden(board, mv.x, mv.y)) {
     mv = findNonForbiddenMove();
     if (!mv) {
@@ -380,8 +353,8 @@ async function aiStartMove() {
   placeStone(mv.x, mv.y, aiColor);
 
   if (checkWin(aiColor)) {
-    setStatus("💀 AI 승리!");
     gameOver = true;
+    setStatus("💀 AI 승리!");
     renderBoard();
     return;
   }
@@ -391,9 +364,7 @@ async function aiStartMove() {
   renderBoard();
 }
 
-/* ============================
-   금수 아닌 대체 착수
-============================ */
+/* ========== 금수 아닌 대체 자리 ========== */
 function findNonForbiddenMove() {
   for (let y = 0; y < SIZE; y++) {
     for (let x = 0; x < SIZE; x++) {
@@ -405,64 +376,48 @@ function findNonForbiddenMove() {
   return null;
 }
 
-/* ============================
-   B 난이도 (기본)
-============================ */
+/* ========================================
+   AI 알고리즘 (B, C 난이도)
+======================================== */
+
 function aiMove_B() {
-  // 1) AI의 즉승
   let win = findWinningMove(aiColor);
   if (win) return win;
 
-  // 2) 상대의 즉승 차단
   let block = findWinningMove(humanColor);
   if (block) return block;
 
-  // 3) AI 강제 4 수
   let f = findForceMove(aiColor);
   if (f) return f;
 
-  // 4) 상대 강제 4 수 차단
   let fb = findForceMove(humanColor);
   if (fb) return fb;
 
-  // 5) 전략 위치
   return chooseStrategicMove(false);
 }
 
-/* ============================
-   C 난이도 (더 똑똑)
-============================ */
 function aiMove_C() {
-  // 1) AI 즉승
   let win = findWinningMove(aiColor);
   if (win) return win;
 
-  // 2) 상대 즉승 차단
   let block = findWinningMove(humanColor);
   if (block) return block;
 
-  // 3) AI 더블 쓰레트
   let dual = findDoubleThreat(aiColor);
   if (dual) return dual;
 
-  // 4) 상대 더블 쓰레트 차단
   let dualBlock = findDoubleThreat(humanColor);
   if (dualBlock) return dualBlock;
 
-  // 5) 강제 4
   let f = findForceMove(aiColor);
   if (f) return f;
 
   let fb = findForceMove(humanColor);
   if (fb) return fb;
 
-  // 6) 전략 위치
   return chooseStrategicMove(true);
 }
 
-/* ============================
-   승리 수 탐색
-============================ */
 function findWinningMove(color) {
   for (let y = 0; y < SIZE; y++) {
     for (let x = 0; x < SIZE; x++) {
@@ -479,12 +434,9 @@ function findWinningMove(color) {
   return null;
 }
 
-/* ============================
-   강제 4 수 찾기
-============================ */
 function findForceMove(color) {
   const dirs = [[1,0],[0,1],[1,1],[1,-1]];
-  let best = null, bestScore = 0;
+  let best = null, scoreBest = 0;
 
   for (let y = 0; y < SIZE; y++) {
     for (let x = 0; x < SIZE; x++) {
@@ -492,14 +444,15 @@ function findForceMove(color) {
       if (color === BLACK && isForbidden(board, x, y)) continue;
 
       let score = 0;
+
       for (const [dx, dy] of dirs) {
         let c = countSeq(board, x, y, dx, dy, color);
         if (c === 4) score += 100000;
         else if (c === 3) score += 800;
       }
 
-      if (score > bestScore) {
-        bestScore = score;
+      if (score > scoreBest) {
+        scoreBest = score;
         best = { x, y };
       }
     }
@@ -507,12 +460,9 @@ function findForceMove(color) {
   return best;
 }
 
-/* ============================
-   더블 쓰레트 (C 난이도)
-============================ */
 function findDoubleThreat(color) {
-  let cntBest = 0;
-  let bestMove = null;
+  let best = null;
+  let maxCount = 0;
 
   for (let y = 0; y < SIZE; y++) {
     for (let x = 0; x < SIZE; x++) {
@@ -520,22 +470,19 @@ function findDoubleThreat(color) {
       if (color === BLACK && isForbidden(board, x, y)) continue;
 
       board[y][x] = color;
-      let f1 = findForceMove(color);
-      let cnt = f1 ? 1 : 0;
+      let f = findForceMove(color);
+      let cnt = f ? 1 : 0;
       board[y][x] = EMPTY;
 
-      if (cnt > cntBest) {
-        cntBest = cnt;
-        bestMove = { x, y };
+      if (cnt > maxCount) {
+        maxCount = cnt;
+        best = { x, y };
       }
     }
   }
-  return bestMove;
+  return best;
 }
 
-/* ============================
-   전략 위치 선택
-============================ */
 function chooseStrategicMove(hardMode) {
   let best = null;
   let bestScore = -Infinity;
@@ -546,18 +493,16 @@ function chooseStrategicMove(hardMode) {
       if (aiColor === BLACK && isForbidden(board, x, y)) continue;
 
       let score = 0;
-
-      // 중심 가중치
       const dist = Math.abs(x - 7) + Math.abs(y - 7);
+
       score += (hardMode ? 30 : 18) - dist;
 
-      // 주변 영향
       for (let dy = -2; dy <= 2; dy++) {
         for (let dx = -2; dx <= 2; dx++) {
           let nx = x + dx, ny = y + dy;
           if (!isIn(nx, ny)) continue;
 
-          if (board[ny][nx] === aiColor)    score += (hardMode ? 14 : 10);
+          if (board[ny][nx] === aiColor) score += (hardMode ? 14 : 10);
           if (board[ny][nx] === humanColor) score += (hardMode ? 11 : 7);
         }
       }
@@ -571,12 +516,16 @@ function chooseStrategicMove(hardMode) {
   return best;
 }
 
+/* ========================================
+   🏁 승리 판정 & 금수 검사
+======================================== */
+
 function checkWin(color) {
   const dirs = [
-    [1, 0],   // →
-    [0, 1],   // ↓
-    [1, 1],   // ↘
-    [1, -1]   // ↗
+    [1, 0],
+    [0, 1],
+    [1, 1],
+    [1, -1],
   ];
 
   for (let y = 0; y < SIZE; y++) {
@@ -586,7 +535,6 @@ function checkWin(color) {
       for (const [dx, dy] of dirs) {
         let cnt = 1;
 
-        // 정방향
         let nx = x + dx, ny = y + dy;
         while (isIn(nx, ny) && board[ny][nx] === color) {
           cnt++;
@@ -594,8 +542,8 @@ function checkWin(color) {
           ny += dy;
         }
 
-        // 역방향
-        nx = x - dx; ny = y - dy;
+        nx = x - dx;
+        ny = y - dy;
         while (isIn(nx, ny) && board[ny][nx] === color) {
           cnt++;
           nx -= dx;
@@ -609,26 +557,20 @@ function checkWin(color) {
   return false;
 }
 
-/* ============================
-   금수 검사 (렌주룰)
-============================ */
 function isForbidden(bd, x, y) {
-  if (bd[y][x] !== EMPTY) return true;  // 이미 돌 있음 → 금수
+  if (bd[y][x] !== EMPTY) return true;
 
   bd[y][x] = BLACK;
 
-  const over6  = isOverline(bd, x, y);
-  const open3  = countOpenThree(bd, x, y) >= 2;
-  const open4  = countOpenFour(bd, x, y) >= 2;
+  const over6 = isOverline(bd, x, y);
+  const open3 = countOpenThree(bd, x, y) >= 2;
+  const open4 = countOpenFour(bd, x, y) >= 2;
 
   bd[y][x] = EMPTY;
 
   return over6 || open3 || open4;
 }
 
-/* ============================
-   6목 이상 체크 (장목)
-============================ */
 function isOverline(bd, x, y) {
   return (
     countSeq(bd, x, y, 1, 0, BLACK) >= 6 ||
@@ -638,22 +580,19 @@ function isOverline(bd, x, y) {
   );
 }
 
-/* ============================
-   연속 돌 개수 세기
-============================ */
 function countSeq(bd, x, y, dx, dy, color) {
   let cnt = 1;
-
-  // 정방향
   let nx = x + dx, ny = y + dy;
+
   while (isIn(nx, ny) && bd[ny][nx] === color) {
     cnt++;
     nx += dx;
     ny += dy;
   }
 
-  // 역방향
-  nx = x - dx; ny = y - dy;
+  nx = x - dx;
+  ny = y - dy;
+
   while (isIn(nx, ny) && bd[ny][nx] === color) {
     cnt++;
     nx -= dx;
@@ -663,11 +602,10 @@ function countSeq(bd, x, y, dx, dy, color) {
   return cnt;
 }
 
-/* ============================
-   패턴 검사 유틸
-============================ */
-function countPattern(bd, x, y, targetPattern) {
-  const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+function countPattern(bd, x, y, pattern) {
+  const dirs = [
+    [1, 0], [0, 1], [1, 1], [1, -1]
+  ];
   let cnt = 0;
 
   for (const [dx, dy] of dirs) {
@@ -677,24 +615,16 @@ function countPattern(bd, x, y, targetPattern) {
       let nx = x + dx * k;
       let ny = y + dy * k;
 
-      if (!isIn(nx, ny)) {
-        line += "3"; // 바깥 표기
-      } else {
-        line += (
-          bd[ny][nx] === BLACK ? "1" :
-          bd[ny][nx] === WHITE ? "2" : "0"
-        );
-      }
+      if (!isIn(nx, ny)) line += "3";
+      else line += (bd[ny][nx] === BLACK ? "1"
+              : bd[ny][nx] === WHITE ? "2" : "0");
     }
 
-    if (line.includes(targetPattern)) cnt++;
+    if (line.includes(pattern)) cnt++;
   }
   return cnt;
 }
 
-/* ============================
-   열린 3 / 열린 4
-============================ */
 function countOpenThree(bd, x, y) {
   return countPattern(bd, x, y, "01110");
 }
@@ -703,28 +633,21 @@ function countOpenFour(bd, x, y) {
   return countPattern(bd, x, y, "011110");
 }
 
-/* ============================
-   범위 체크
-============================ */
 function isIn(x, y) {
-  return (x >= 0 && y >= 0 && x < SIZE && y < SIZE);
+  return x >= 0 && y >= 0 && x < SIZE && y < SIZE;
 }
 
-/* ============================
-   상태 메시지
-============================ */
+/* ========================================
+   출력
+======================================== */
 function setStatus(msg) {
   document.getElementById("statusBox").textContent = msg;
 }
-
 </script>
 
-</html>
+<footer style="text-align:center; margin-top:20px; opacity:0.8;">
+  <img src="https://hits.sh/atorazi.github.io/291.svg?color=f3ff00&labelColor=111ca8">
+</footer>
 
-    
-</script>
 </body>
 </html>
-
-
-
