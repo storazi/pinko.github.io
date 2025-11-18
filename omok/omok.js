@@ -533,3 +533,4 @@ window.onload = () => {
     document.documentElement.style.setProperty("--stone-size", stoneSize + "px");
     startGame();
 };
+
