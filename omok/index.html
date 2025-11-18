@@ -5,41 +5,40 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>⚫ 오목 AI (렌주룰)</title>
 
-<!-- 외부 CSS 불러오기 -->
-<link rel="stylesheet" href="./style.css">
+<!-- 외부 CSS 로드 -->
+<link rel="stylesheet" href="style.css">
+
 </head>
 
 <body>
-
 <h1>⚫ 오목 AI (렌주룰)</h1>
 
+<!-- 옵션 바 -->
 <div class="option-bar">
-  <label><input type="radio" name="firstPlayer" value="human" checked> 사람이 흑(선공)</label>
-  <label><input type="radio" name="firstPlayer" value="ai"> AI 선공</label>
+    <label><input type="radio" name="firstPlayer" value="human" checked> 사람이 흑(선공)</label>
+    <label><input type="radio" name="firstPlayer" value="ai"> AI 선공</label>
 
-  <span style="margin: 0 10px;"></span>
+    <span style="margin:0 10px;"></span>
 
-  <label><input type="radio" name="difficulty" value="normal" checked> 보통</label>
-  <label><input type="radio" name="difficulty" value="hard"> 어려움</label>
+    <label><input type="radio" name="difficulty" value="normal" checked> 보통</label>
+    <label><input type="radio" name="difficulty" value="hard"> 어려움</label>
 
-  <button id="resetBtn">새 게임</button>
+    <button id="resetBtn">새 게임</button>
 </div>
 
+<!-- 상태 메시지 -->
 <div id="statusBox">준비 중...</div>
 
+<!-- 보드 -->
 <div id="boardContainer">
-  <div id="boardWrapper">
-    <div id="board"></div>
-    <div id="ghostStone"></div>
-  </div>
+    <div id="boardWrapper">
+        <div id="board"></div>
+        <div id="ghostStone"></div>
+    </div>
 </div>
 
-<footer style="margin-top:20px; font-size:14px; opacity:0.8; text-align:center;">
-  <img src="https://hits.sh/atorazi.github.io/291.svg?color=f3ff00&labelColor=111ca8">
-</footer>
-
-<!-- 오목 전체 로직 JS -->
-<script src="./omok.js"></script>
+<!-- JS 로드 -->
+<script src="omok.js"></script>
 
 </body>
 </html>
