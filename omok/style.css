@@ -86,8 +86,11 @@ h1 {
     background-image:
         linear-gradient(#000 2px, transparent 2px),
         linear-gradient(90deg, #000 2px, transparent 2px);
-    background-size: calc(100% / 15) calc(100% / 15);
+
+    /* 🔥 핵심 수정 */
+    background-size: calc(100% / 14) calc(100% / 14);
 }
+
 
 /* ===========================================
    교차점 클릭 포인트
