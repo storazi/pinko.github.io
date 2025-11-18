@@ -10,6 +10,36 @@ SPDX-License-Identifier: MIT
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>🐂 미궁 시뮬레이터</title>
   <link rel="stylesheet" href="./style.css">
+
+  <style>
+    #omokWrapper {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #000;
+      margin:0;
+      padding:0;
+    }
+
+    #omokFrame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
+      margin:0;
+      padding:0;
+    }
+
+    .content.active-omok {
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+    }
+
+    body.omok-mode {
+      padding: 0 !important;
+    }
+  </style>
 </head>
 
 <body>
@@ -19,63 +49,41 @@ SPDX-License-Identifier: MIT
     <nav class="sidebar">
       <button id="tabHome" class="active">🏠 홈</button>
       <button id="tabAnsi">🎨 디스코드 텍스트</button>
-      <button id="tabSim">🐾 초기치 시뮬레이터</button>
       <button id="tabExp">📘 경험치 계산기</button>
-      <button id="tabEnhance">🪄 강화 시뮬레이터</button>
       <button id="tabGrowth">📊 성장률 계산기</button>
-
-      <!-- 🔥 오목은 독립 페이지로 이동 -->
-      <button onclick="window.location.href='./omok/index.html'">⚫ 오목 AI</button>
+      <button onclick="window.location.href='/291/simulator.html'">⚔️ 전투 시뮬레이터</button>
+      <button id="tabOmok">⭕ 오목 AI</button>
     </nav>
 
-    <!-- 📈 오른쪽 content -->
+    <!-- 📈 메인 콘텐츠 -->
     <main class="content">
 
-      <!-- 🏠 홈 탭 -->
+      <!-- 🏠 홈 -->
       <section id="homeTab" class="tab-content active">
         <h2>🐂 미궁 시뮬레이터</h2>
         <p>
-          환영합니다! 🌀<br><br>
-          이 페이지는 <b>스톤에이지 노바 서버</b>의 <b>미궁 부족</b>을 위한<br>
-          <mark>시뮬레이터 & 성장 계산 도구</mark>입니다.
+          스톤에이지 노바 서버 <b>미궁 부족</b> 전용 도구 페이지입니다.
         </p>
 
         <ul>
-          <li>🐾 초기치 시뮬레이터</li>
           <li>📘 경험치 계산기</li>
-          <li>🪄 강화 시뮬레이터</li>
           <li>📊 성장률 계산기</li>
-          <li>⚫ 오목 AI (독립 페이지)</li>
+          <li>🎨 디스코드 ANSI 텍스트 생성기</li>
+          <li>⚔️ 전투 시뮬레이터</li>
+          <li>⭕ 오목 AI</li>
         </ul>
 
         <p style="margin-top:20px; font-size:14px; color:#9aa;">
-          제작: <b>storazi, discord : 지원(sub_bot)</b> ｜ 
-          <a href="https://github.com/atorazi" target="_blank" style="color:#ffd447;">GitHub 바로가기</a>
+          제작: <b>storazi</b> ｜ discord : 지원(sub_bot)
         </p>
       </section>
 
-      <!-- 🎨 ANSI -->
+      <!-- 🎨 디스코드 ANSI -->
       <section id="ansiTab" class="tab-content">
         <h2>🎨 디스코드 텍스트 생성기</h2>
         <iframe src="./ansi.html"
           width="100%" height="780"
-          style="border:none; border-radius:10px; background:#0b1220;">
-        </iframe>
-      </section>
-
-      <!-- 🐾 초기치 -->
-      <section id="simTab" class="tab-content">
-        <h2>🐾 초기치 시뮬레이터</h2>
-        <input id="petName" placeholder="펫 이름 입력">
-        <div id="sgrade"></div>
-        <textarea id="result" rows="10" readonly></textarea>
-
-        <div class="controls">
-          <button id="sim1">1회 시뮬레이션</button>
-          <button id="sim5">5회 시뮬레이션</button>
-          <button id="clear">초기화</button>
-        </div>
-        <div id="costDisplay">💰 총 소모: 0원</div>
+          style="border:none; border-radius:10px; background:#0b1220;"></iframe>
       </section>
 
       <!-- 📘 경험치 계산기 -->
@@ -91,68 +99,101 @@ SPDX-License-Identifier: MIT
 
         <div id="results" hidden>
           <p>📊 필요 경험치: <span id="statRemain">-</span></p>
-          <p>⏰ 예상 소요시간: <span id="statHours">-</span></p>
+          <p>⏰ 예상 시간: <span id="statHours">-</span></p>
           <p>📅 일수 환산: <span id="statDays">-</span></p>
         </div>
       </section>
 
-      <!-- 🪄 강화 -->
-      <section id="enhanceTab" class="tab-content">
-        <h2>🪄 강화 시뮬레이터</h2>
-        <!-- 기존 내용 유지 -->
-      </section>
-
-      <!-- 📊 성장률 -->
+      <!-- 📊 성장률 계산기 -->
       <section id="growthTab" class="tab-content">
         <h2>📊 성장률 계산기</h2>
-        <!-- 기존 내용 유지 -->
+        <input id="growthName" placeholder="펫 이름">
+        <input id="growthLevel" placeholder="레벨">
+        <input id="growthHP" placeholder="HP">
+        <input id="growthAtk" placeholder="Atk">
+        <input id="growthDef" placeholder="Def">
+        <input id="growthAgi" placeholder="Agi">
+        <button id="growthRun">계산하기</button>
+
+        <div id="growthResult" class="growth-table"></div>
+      </section>
+
+      <!-- ⭕ 오목 AI -->
+      <section id="omokTab" class="tab-content" style="padding:0;">
+        <div id="omokWrapper">
+          <iframe src="/291/omok/index.html" id="omokFrame"></iframe>
+        </div>
       </section>
 
     </main>
   </div>
 
-  <!-- Footer -->
   <footer>
     © 2025 <strong>storazi</strong>. All rights reserved.<br>
-    Licensed under the MIT License.
-    <br><img src="https://hits.sh/atorazi.github.io/291.svg?color=f3ff00&labelColor=111ca8">
+    <img src="https://hits.sh/atorazi.github.io/291.svg?color=f3ff00&labelColor=111ca8">
   </footer>
 
-  <!-- 원래 쓰던 JS 그대로 유지 -->
-  <script src="./app.js"></script>
+<script>
+function fitOmokHeight() {
+  const wrap = document.getElementById("omokWrapper");
+  const iframe = document.getElementById("omokFrame");
+  if (!wrap || !iframe) return;
 
-  <!-- 탭 전환 -->
-  <script>
-    const tabs = {
-      tabHome:"homeTab",
-      tabAnsi:"ansiTab",
-      tabSim:"simTab",
-      tabExp:"expTab",
-      tabEnhance:"enhanceTab",
-      tabGrowth:"growthTab"
-    };
+  const footerSpace = 120;
+  const vh = window.innerHeight;
+  const top = wrap.getBoundingClientRect().top;
 
-    Object.keys(tabs).forEach(key => {
-      const btn = document.getElementById(key);
-      if (!btn) return;
+  const newHeight = vh - top - footerSpace;
+  wrap.style.height = newHeight + "px";
+  iframe.style.height = newHeight + "px";
+}
 
-      btn.addEventListener("click", () => {
+window.addEventListener("resize", fitOmokHeight);
+</script>
 
-        document.querySelectorAll(".tab-content")
-          .forEach(t => t.classList.remove("active"));
+<script src="./app.js"></script>
 
-        document.querySelectorAll(".sidebar button")
-          .forEach(b => b.classList.remove("active"));
+<script>
+  const tabs = {
+    tabHome:"homeTab",
+    tabAnsi:"ansiTab",
+    tabExp:"expTab",
+    tabGrowth:"growthTab",
+    tabOmok:"omokTab"
+  };
 
-        document.getElementById(tabs[key]).classList.add("active");
-        btn.classList.add("active");
-      });
+  Object.keys(tabs).forEach(key => {
+    const btn = document.getElementById(key);
+    if (!btn) return;
+
+    btn.addEventListener("click", () => {
+
+      document.querySelectorAll(".tab-content").forEach(t =>
+        t.classList.remove("active")
+      );
+
+      document.querySelectorAll(".sidebar button").forEach(b =>
+        b.classList.remove("active")
+      );
+
+      document.getElementById(tabs[key]).classList.add("active");
+      btn.classList.add("active");
+
+      const body = document.body;
+      const content = document.querySelector("main.content");
+
+      if (key === "tabOmok") {
+        content.classList.add("active-omok");
+        body.classList.add("omok-mode");
+        setTimeout(fitOmokHeight, 50);
+      } else {
+        content.classList.remove("active-omok");
+        body.classList.remove("omok-mode");
+      }
+
     });
-  </script>
+  });
+</script>
 
 </body>
 </html>
-
-
-
-
