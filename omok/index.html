@@ -1,73 +1,167 @@
+<!--
+SPDX-FileCopyrightText: © 2025 atorazi <atorazi@github.io>
+SPDX-License-Identifier: MIT
+-->
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>오목 AI (렌주룰)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  
-  <!-- 스타일 -->
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>오목 AI (렌주룰)</title>
 
-  <script defer src="omok.js"></script>
+<style>
+    body {
+        margin: 0;
+        background: #081226;
+        color: #fff;
+        font-family: "Pretendard", sans-serif;
+        text-align: center;
+    }
+
+    h1 {
+        margin-top: 25px;
+        font-size: 32px;
+        color: #ffd447;
+    }
+
+    .sub {
+        margin-bottom: 16px;
+        color: #cdd5ff;
+        font-size: 14px;
+    }
+
+    /* 컨트롤 UI */
+    .top-menu {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin-top: 15px;
+        margin-bottom: 10px;
+    }
+    .menu-box {
+        background: #121f3a;
+        padding: 10px 20px;
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .menu-box label { cursor: pointer; }
+    .menu-box input { margin-right: 4px; }
+
+    #resetBtn {
+        background: #ffd447;
+        padding: 10px 18px;
+        border-radius: 10px;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+        color: #111;
+    }
+
+    /* 상태 표시줄 */
+    #statusBox {
+        width: 90%;
+        max-width: 900px;
+        margin: 20px auto 15px auto;
+        background: #10214e;
+        padding: 12px;
+        text-align: left;
+        border-radius: 10px;
+        border-left: 6px solid #ffd447;
+        font-size: 15px;
+    }
+
+    /* 오목보드 */
+    #boardWrapper {
+    width: 750px;
+    height: 750px;
+    margin: 0 auto;
+    position: relative;
+    background: #b98144;
+    border: 10px solid #d9a066;
+    border-radius: 10px;
+
+    background-image:
+        linear-gradient(#000 2px, transparent 2px),
+        linear-gradient(90deg, #000 2px, transparent 2px);
+    background-size: 50px 50px; /* 750/15 = 50px */
+}
+
+    }
+
+    #board {
+        width: 750px;
+        height: 750px;
+        position: relative;
+    }
+
+    /* 교차점 */
+    .point {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        transform: translate(-50%, -50%);
+        cursor: pointer;
+    }
+
+    /* 돌 */
+    .stone {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 6px rgba(0,0,0,0.5);
+    }
+    .stone.black { background: #000; }
+    .stone.white { background: #fff; }
+
+    /* 금수 */
+    .ban {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-weight: bold;
+        font-size: 20px;
+        color: yellow;
+    }
+</style>
 </head>
 
 <body>
-  <div class="wrapper">
-    <h1>오목 AI (렌주룰)</h1>
-    <p class="sub">정식 렌주룰: 3·3 / 4·4 / 장목(6목↑) 금지 — 금수는 B로 표시됩니다.</p>
 
-    <!-- 옵션 -->
-    <div class="top-bar">
+<h1>오목 AI (렌주룰)</h1>
+<div class="sub">정식 렌주룰: 3·3 / 4·4 / 장목(6목 ↑) 금지 — 금수는 B로 표시됩니다.</div>
 
-      <!-- 난이도 -->
-      <div class="group">
-        <div class="label">난이도</div>
-        <div class="pill-group">
-          <label>
-            <input type="radio" name="difficulty" value="normal" checked>
-            <span>보통</span>
-          </label>
-          <label>
-            <input type="radio" name="difficulty" value="hard">
-            <span>어려움</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- 선후공 -->
-      <div class="group">
-        <div class="label">선공(흑)</div>
-        <div class="pill-group">
-          <label>
-            <input type="radio" name="firstPlayer" value="human-black" checked>
-            <span>사람</span>
-          </label>
-          <label>
-            <input type="radio" name="firstPlayer" value="ai-black">
-            <span>AI</span>
-          </label>
-        </div>
-      </div>
-
-      <button id="resetBtn">새 게임</button>
+<!-- 메뉴 -->
+<div class="top-menu">
+    <div class="menu-box">
+        위치  
+        <label><input type="radio" name="difficulty" value="normal" checked> 보통</label>
+        <label><input type="radio" name="difficulty" value="hard"> 어려움</label>
     </div>
 
-    <!-- 상태창 -->
-    <div class="status">
-      <div class="status-main" id="statusText">당신 차례입니다. (흑 ●)</div>
-      <div class="legend">
-        <span><span class="stone-sample stone-black"></span> 흑</span>
-        <span><span class="stone-sample stone-white"></span> 백</span>
-        <span><span class="b-sample">B</span> 금수 자리</span>
-      </div>
+    <div class="menu-box">
+        선공(흑)
+        <label><input type="radio" name="firstPlayer" value="human" checked> 사람</label>
+        <label><input type="radio" name="firstPlayer" value="ai"> AI</label>
     </div>
 
-    <!-- 오목판 -->
-    <div class="board-wrapper">
-      <table id="board"></table>
-    </div>
+    <button id="resetBtn">새 게임</button>
+</div>
 
-    <div class="hint">※ 렌주룰: 흑 3-3 금지, 4-4 금지, 장목 금지(6목↑)</div>
-  </div>
+<div id="statusBox">준비 중...</div>
+
+<!-- 보드 -->
+<div id="boardWrapper">
+    <div id="board" class="board"></div>
+</div>
+
+<script src="./omok.js"></script>
 </body>
 </html>
