@@ -1,362 +1,488 @@
-/* ---------------------------------------------------------
-   PART 1 — 기본 보드 / 렌주 금수 / 기초 도우미
---------------------------------------------------------- */
+/* ============================================================
+   오목 AI (렌주룰 + Threat-Based)
+============================================================ */
 
 const SIZE = 15;
 const EMPTY = 0;
 const BLACK = 1;
 const WHITE = 2;
 
-let board = Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
-let currentPlayer = BLACK;
+let board = [];
 let humanColor = BLACK;
 let aiColor = WHITE;
+let turn = BLACK;
 let gameOver = false;
-let lastMove = null;
 
-/* 유틸 */
-function cloneBoard(src) {
-    return src.map(row => row.slice());
+/* ============================================================
+   고정 값 : 보드 간격 / 돌 크기
+============================================================ */
+const cell = 50;      // 선-선 간격 (CSS와 반드시 동일)
+const pad = 0;        // 시작 오프셋
+const stoneSize = 100; // 돌 크기(px)
+
+/* ============================================================
+   DOM 보드 초기화 (돌 남는 문제 해결)
+============================================================ */
+function resetBoardUI() {
+    const wrap = document.getElementById("boardWrapper");
+    wrap.innerHTML = `<div id="board" class="board"></div>`;
 }
 
-function isIn(x, y) {
-    return x >= 0 && y >= 0 && x < SIZE && y < SIZE;
+/* ============================================================
+   데이터 초기화
+============================================================ */
+function initBoard() {
+    board = Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
 }
 
-/* -------------------------
-   5목 / 장목 체크
-------------------------- */
-function countDirection(bd, x, y, dx, dy, color) {
-    let count = 1;
-    let nx = x + dx, ny = y + dy;
+/* ============================================================
+   클릭 포인트 UI 생성
+============================================================ */
+function createBoardUI() {
+    const bd = document.getElementById("board");
+    bd.innerHTML = "";
 
-    while (isIn(nx, ny) && bd[ny][nx] === color) {
-        count++;
-        nx += dx; ny += dy;
+    for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+            const p = document.createElement("div");
+            p.className = "point";
+            p.dataset.x = x;
+            p.dataset.y = y;
+
+            // 교차점에 정확히 위치
+            p.style.left = (pad + x * cell) + "px";
+            p.style.top  = (pad + y * cell) + "px";
+
+            p.addEventListener("click", onHumanClick);
+            bd.appendChild(p);
+        }
+    }
+}
+
+/* ============================================================
+   보드 렌더링
+============================================================ */
+function renderBoard() {
+    const boardEl = document.getElementById("board");
+
+    // 기존 돌 / 금수 제거
+    document.querySelectorAll(".stone").forEach(s => s.remove());
+    document.querySelectorAll(".ban").forEach(b => b.remove());
+
+    // point 내부 초기화
+    document.querySelectorAll(".point").forEach(p => (p.innerHTML = ""));
+
+    for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+
+            const stoneColor = board[y][x];
+
+            /* -----------------------
+               금수 표시 (흑 턴에서만)
+            ------------------------- */
+            if (turn === BLACK && stoneColor === EMPTY && isForbidden(board, x, y)) {
+                const b = document.createElement("div");
+                b.className = "ban";
+                b.textContent = "B";
+
+                b.style.left = (pad + x * cell - 10) + "px";
+                b.style.top  = (pad + y * cell - 10) + "px";
+
+                boardEl.appendChild(b);
+            }
+
+            /* -----------------------
+               돌 렌더링
+            ------------------------- */
+            if (stoneColor === BLACK || stoneColor === WHITE) {
+                const s = document.createElement("div");
+                s.className = "stone " + (stoneColor === BLACK ? "black" : "white");
+
+                // 중심 배치 (CSS에서 translate(-50%, -50%) 적용)
+                s.style.left = (pad + x * cell) + "px";
+                s.style.top  = (pad + y * cell) + "px";
+
+                boardEl.appendChild(s);
+            }
+        }
+    }
+}
+
+/* ============================================================
+   게임 시작
+============================================================ */
+function startGame() {
+    resetBoardUI();
+    initBoard();
+    createBoardUI();
+    renderBoard();
+
+    const first = document.querySelector("input[name=firstPlayer]:checked").value;
+    humanColor = (first === "human" ? BLACK : WHITE);
+    aiColor    = (humanColor === BLACK ? WHITE : BLACK);
+
+    turn = BLACK;
+    gameOver = false;
+    setStatus("새 게임이 시작되었습니다.");
+
+    if (first === "ai") aiStartMove();
+}
+
+/* ============================================================
+   사람 착수
+============================================================ */
+function onHumanClick(e) {
+    if (gameOver) return;
+    if (turn !== humanColor) return;
+
+    const x = +e.currentTarget.dataset.x;
+    const y = +e.currentTarget.dataset.y;
+
+    if (board[y][x] !== EMPTY) return;
+
+    if (turn === BLACK && isForbidden(board, x, y)) {
+        setStatus("⚠ 금수 자리입니다!");
+        return;
     }
 
-    nx = x - dx; ny = y - dy;
-    while (isIn(nx, ny) && bd[ny][nx] === color) {
-        count++;
-        nx -= dx; ny -= dy;
+    placeStone(x, y, humanColor);
+
+    if (checkWin(humanColor)) {
+        setStatus("🎉 당신의 승리!");
+        gameOver = true;
+        renderBoard();
+        return;
     }
-    return count;
+
+    turn = aiColor;
+    renderBoard();
+    aiStartMove();
 }
 
-function isOverline(bd, x, y) {
+/* ============================================================
+   돌 놓기
+============================================================ */
+function placeStone(x, y, color) {
+    board[y][x] = color;
+}
+
+/* ============================================================
+   AI 착수
+============================================================ */
+async function aiStartMove() {
+    if (gameOver) return;
+
+    setStatus("AI 생각 중...");
+    await new Promise(r => setTimeout(r, 60));
+
+    const diff = document.querySelector("input[name=difficulty]:checked").value;
+    let mv = (diff === "normal" ? aiMove_B() : aiMove_C());
+
+    if (!mv) return;
+
+    // 금수 회피
+    if (aiColor === BLACK && isForbidden(board, mv.x, mv.y)) {
+        mv = findNonForbiddenMove();
+        if (!mv) {
+            setStatus("무승부!");
+            return;
+        }
+    }
+
+    placeStone(mv.x, mv.y, aiColor);
+
+    if (checkWin(aiColor)) {
+        setStatus("💀 AI 승리!");
+        gameOver = true;
+        renderBoard();
+        return;
+    }
+
+    turn = humanColor;
+    setStatus("당신 차례입니다.");
+    renderBoard();
+}
+
+/* ============================================================
+   금수 아닌 대체 착수
+============================================================ */
+function findNonForbiddenMove() {
+    for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+            if (board[y][x] === EMPTY && !isForbidden(board, x, y))
+                return { x, y };
+        }
+    }
+    return null;
+}
+
+/* ============================================================
+   B 난이도
+============================================================ */
+function aiMove_B() {
+    let win   = findWinningMove(aiColor);
+    if (win) return win;
+
+    let block = findWinningMove(humanColor);
+    if (block) return block;
+
+    let f  = findForceMove(aiColor);
+    if (f) return f;
+
+    let fb = findForceMove(humanColor);
+    if (fb) return fb;
+
+    return chooseStrategicMove(false);
+}
+
+/* ============================================================
+   C 난이도
+============================================================ */
+function aiMove_C() {
+    let win = findWinningMove(aiColor);
+    if (win) return win;
+
+    let block = findWinningMove(humanColor);
+    if (block) return block;
+
+    let dual = findDoubleThreat(aiColor);
+    if (dual) return dual;
+
+    let dualBlock = findDoubleThreat(humanColor);
+    if (dualBlock) return dualBlock;
+
+    let f = findForceMove(aiColor);
+    if (f) return f;
+
+    let fb = findForceMove(humanColor);
+    if (fb) return fb;
+
+    return chooseStrategicMove(true);
+}
+
+/* ============================================================
+   승리 수 탐색
+============================================================ */
+function findWinningMove(color) {
+    for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+
+            if (board[y][x] !== EMPTY) continue;
+            if (color === BLACK && isForbidden(board, x, y)) continue;
+
+            board[y][x] = color;
+            let win = checkWin(color);
+            board[y][x] = EMPTY;
+
+            if (win) return { x, y };
+        }
+    }
+    return null;
+}
+
+/* ============================================================
+   강제 4
+============================================================ */
+function findForceMove(color) {
+    let dirs = [[1,0],[0,1],[1,1],[1,-1]];
+    let best = null, bestScore = 0;
+
+    for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+
+            if (board[y][x] !== EMPTY) continue;
+            if (color === BLACK && isForbidden(board, x, y)) continue;
+
+            let score = 0;
+
+            for (const [dx, dy] of dirs) {
+                let c = countSeq(board, x, y, dx, dy, color);
+                if (c === 4) score += 100000;
+                else if (c === 3) score += 800;
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                best = { x, y };
+            }
+        }
+    }
+    return best;
+}
+
+/* ============================================================
+   더블 쓰레트 (C 난이도)
+============================================================ */
+function findDoubleThreat(color) {
+    for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+
+            if (board[y][x] !== EMPTY) continue;
+            if (color === BLACK && isForbidden(board, x, y)) continue;
+
+            board[y][x] = color;
+            let f = findForceMove(color);
+            let cnt = f ? 1 : 0;
+            board[y][x] = EMPTY;
+
+            if (cnt >= 2) return { x, y };
+        }
+    }
+    return null;
+}
+
+/* ============================================================
+   전략 위치 선택
+============================================================ */
+function chooseStrategicMove(hardMode) {
+    let best = null;
+    let bestScore = -Infinity;
+
+    for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+
+            if (board[y][x] !== EMPTY) continue;
+            if (aiColor === BLACK && isForbidden(board, x, y)) continue;
+
+            let score = 0;
+
+            // 중심 가중치
+            const dist = Math.abs(x - 7) + Math.abs(y - 7);
+            score += (hardMode ? 30 : 18) - dist;
+
+            // 주변 돌 영향
+            for (let dy = -2; dy <= 2; dy++) {
+                for (let dx = -2; dx <= 2; dx++) {
+                    let nx = x + dx, ny = y + dy;
+                    if (!isIn(nx, ny)) continue;
+
+                    if (board[ny][nx] === aiColor) score += (hardMode ? 14 : 10);
+                    if (board[ny][nx] === humanColor) score += (hardMode ? 11 : 7);
+                }
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                best = { x, y };
+            }
+        }
+    }
+    return best;
+}
+
+/* ============================================================
+   승리 판정
+============================================================ */
+function checkWin(color) {
     const dirs = [[1,0],[0,1],[1,1],[1,-1]];
-    for (const [dx,dy] of dirs) {
-        const c = countDirection(bd, x, y, dx, dy, BLACK);
-        if (c >= 6) return true; // 장목 금지
+
+    for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+
+            if (board[y][x] !== color) continue;
+
+            for (const [dx, dy] of dirs) {
+                let c = 1;
+
+                // +
+                let nx = x + dx, ny = y + dy;
+                while (isIn(nx, ny) && board[ny][nx] === color) {
+                    c++; nx += dx; ny += dy;
+                }
+
+                // -
+                nx = x - dx; ny = y - dy;
+                while (isIn(nx, ny) && board[ny][nx] === color) {
+                    c++; nx -= dx; ny -= dy;
+                }
+
+                if (c >= 5) return true;
+            }
+        }
     }
     return false;
 }
 
-/* -------------------------
-   열린3, 열린4 체크
-------------------------- */
-function countOpenFour(bd, x, y) {
-    let count = 0;
-    const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+/* ============================================================
+   금수 검사
+============================================================ */
+function isIn(x, y) { return x >= 0 && y >= 0 && x < SIZE && y < SIZE; }
 
-    for (const [dx,dy] of dirs) {
-        let line = "";
-        for (let k= -4; k <= 4; k++) {
-            const nx = x + dx*k, ny = y + dy*k;
-            if (!isIn(nx,ny)) line += "3";
-            else line += (bd[ny][nx] === BLACK) ? "1" : (bd[ny][nx] === EMPTY ? "0" : "2");
-        }
-        if (line.includes("011110")) count++;  // 열린4
-    }
-    return count;
-}
-
-function countOpenThree(bd, x, y) {
-    let count = 0;
-    const dirs = [[1,0],[0,1],[1,1],[1,-1]];
-
-    for (const [dx,dy] of dirs) {
-        let line = "";
-        for (let k= -4; k <= 4; k++) {
-            const nx = x + dx*k, ny = y + dy*k;
-            if (!isIn(nx,ny)) line += "3";
-            else line += (bd[ny][nx] === BLACK) ? "1" : (bd[ny][nx] === EMPTY ? "0" : "2");
-        }
-        if (line.includes("01110")) count++;  // 열린3
-    }
-    return count;
-}
-
-/* ---------------------------------------------------------
-   렌주 금수(흑만)
---------------------------------------------------------- */
 function isForbidden(bd, x, y) {
     if (bd[y][x] !== EMPTY) return true;
 
     bd[y][x] = BLACK;
-    const over = isOverline(bd, x, y);
-    const three = countOpenThree(bd, x, y) >= 2;
-    const four  = countOpenFour(bd, x, y) >= 2;
+
+    const over  = isOverline(bd, x, y);
+    const open3 = countOpenThree(bd, x, y) >= 2;
+    const open4 = countOpenFour(bd, x, y) >= 2;
+
     bd[y][x] = EMPTY;
 
-    return over || three || four;
+    return over || open3 || open4;
 }
 
-/* ---------------------------------------------------------
-   PART 2 — 평가 함수
---------------------------------------------------------- */
+function countSeq(bd, x, y, dx, dy, color) {
+    let cnt = 1;
 
-const SCORE = {
-    FIVE: 10000000,
-    OPEN_FOUR: 500000,
-    FOUR: 50000,
-    OPEN_THREE: 10000,
-    THREE: 3000,
-    TWO: 500,
-    ONE: 50
+    let nx = x + dx, ny = y + dy;
+    while (isIn(nx, ny) && bd[ny][nx] === color) {
+        cnt++; nx += dx; ny += dy;
+    }
+
+    nx = x - dx; ny = y - dy;
+    while (isIn(nx, ny) && bd[ny][nx] === color) {
+        cnt++; nx -= dx; ny -= dy;
+    }
+
+    return cnt;
+}
+
+function isOverline(bd, x, y) {
+    return (
+        countSeq(bd, x, y, 1, 0, BLACK) >= 6 ||
+        countSeq(bd, x, y, 0, 1, BLACK) >= 6 ||
+        countSeq(bd, x, y, 1, 1, BLACK) >= 6 ||
+        countSeq(bd, x, y, 1, -1, BLACK) >= 6
+    );
+}
+
+function countPattern(bd, x, y, pat) {
+    const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+    let cnt = 0;
+
+    for (const [dx, dy] of dirs) {
+        let line = "";
+        for (let k = -4; k <= 4; k++) {
+            let nx = x + dx * k, ny = y + dy * k;
+            if (!isIn(nx, ny)) line += "3";
+            else line += (bd[ny][nx] === BLACK ? "1" :
+                          bd[ny][nx] === WHITE ? "2" : "0");
+        }
+        if (line.includes(pat)) cnt++;
+    }
+    return cnt;
+}
+
+function countOpenThree(bd, x, y) {
+    return countPattern(bd, x, y, "01110");
+}
+
+function countOpenFour(bd, x, y) {
+    return countPattern(bd, x, y, "011110");
+}
+
+/* ============================================================
+   UI 메시지
+============================================================ */
+function setStatus(msg) {
+    document.getElementById("statusBox").textContent = msg;
+}
+
+/* ============================================================
+   초기 실행
+============================================================ */
+window.onload = () => {
+    document.getElementById("resetBtn").onclick = startGame;
+    startGame();
 };
-
-function evaluateLine(arr, color) {
-    const me = color;
-    let score = 0;
-    const line = arr.join("");
-
-    if (line.includes(`${me}${me}${me}${me}${me}`)) score += SCORE.FIVE;
-    if (line.includes(`0${me}${me}${me}${me}0`)) score += SCORE.OPEN_FOUR;
-    if (line.includes(`${me}${me}${me}${me}0`) || line.includes(`0${me}${me}${me}${me}`)) score += SCORE.FOUR;
-    if (line.includes(`0${me}${me}${me}0`)) score += SCORE.OPEN_THREE;
-    if (line.includes(`${me}${me}${me}`)) score += SCORE.THREE;
-    if (line.includes(`${me}${me}`)) score += SCORE.TWO;
-    if (line.includes(`${me}`)) score += SCORE.ONE;
-
-    return score;
-}
-
-function evaluateBoard(bd, color) {
-    let total = 0;
-    const opp = color === BLACK ? WHITE : BLACK;
-    const dirs = [[1,0],[0,1],[1,1],[1,-1]];
-
-    for (let y=0; y<SIZE; y++) {
-        for (let x=0; x<SIZE; x++) {
-            for (const [dx,dy] of dirs) {
-                const arr = [];
-                for (let k=-4; k<=4; k++) {
-                    const nx = x + dx*k, ny = y + dy*k;
-                    arr.push(isIn(nx,ny) ? bd[ny][nx] : 3);
-                }
-                total += evaluateLine(arr, color);
-                total -= evaluateLine(arr, opp) * 0.9;
-            }
-        }
-    }
-    return total;
-}
-
-/* ---------------------------------------------------------
-   PART 3 — Minimax + AlphaBeta + 후보수 생성
---------------------------------------------------------- */
-
-function generateMoves(bd, color) {
-    const moves = [];
-
-    for (let y=0; y<SIZE; y++) {
-        for (let x=0; x<SIZE; x++) {
-            if (bd[y][x] !== EMPTY) continue;
-
-            let near = false;
-            for (let dy=-2; dy<=2; dy++) {
-                for (let dx=-2; dx<=2; dx++) {
-                    const nx=x+dx, ny=y+dy;
-                    if (isIn(nx,ny) && bd[ny][nx] !== EMPTY)
-                        near = true;
-                }
-            }
-            if (!near) continue;
-
-            if (color === BLACK && isForbidden(bd, x, y)) continue;
-
-            moves.push({x,y});
-        }
-    }
-
-    moves.sort((a,b)=> (Math.abs(a.x-7)+Math.abs(a.y-7)) - (Math.abs(b.x-7)+Math.abs(b.y-7)));
-    return moves;
-}
-
-function minimax(bd, depth, alpha, beta, maximizing, color) {
-    if (depth === 0) return evaluateBoard(bd, BLACK);
-
-    const me = maximizing ? color : (color===BLACK ? WHITE : BLACK);
-    const moves = generateMoves(bd, me);
-
-    if (moves.length === 0) return evaluateBoard(bd, BLACK);
-
-    if (maximizing) {
-        let maxEval = -Infinity;
-        for (const mv of moves) {
-            bd[mv.y][mv.x] = me;
-            const eval = minimax(bd, depth-1, alpha, beta, false, color);
-            bd[mv.y][mv.x] = EMPTY;
-
-            if (eval > maxEval) maxEval = eval;
-            if (eval > alpha) alpha = eval;
-            if (beta <= alpha) break;
-        }
-        return maxEval;
-
-    } else {
-        let minEval = Infinity;
-        for (const mv of moves) {
-            bd[mv.y][mv.x] = me;
-            const eval = minimax(bd, depth-1, alpha, beta, true, color);
-            bd[mv.y][mv.x] = EMPTY;
-
-            if (eval < minEval) minEval = eval;
-            if (eval < beta) beta = eval;
-            if (beta <= alpha) break;
-        }
-        return minEval;
-    }
-}
-
-function aiMove(color, depth = 3) {
-    const moves = generateMoves(board, color);
-
-    let bestScore = -Infinity;
-    let bestMove = null;
-
-    for (const mv of moves) {
-        board[mv.y][mv.x] = color;
-        const score = minimax(board, depth, -Infinity, Infinity, false, color);
-        board[mv.y][mv.x] = EMPTY;
-
-        if (score > bestScore) {
-            bestScore = score;
-            bestMove = mv;
-        }
-    }
-    return bestMove;
-}
-
-/* ---------------------------------------------------------
-   PART 4 — 게임 엔진 (UI 연결)
---------------------------------------------------------- */
-
-function putStone(x, y, color) {
-    board[y][x] = color;
-    lastMove = {x,y};
-    renderBoard();
-}
-
-function checkWin(x, y, color) {
-    const dirs = [[1,0],[0,1],[1,1],[1,-1]];
-    for (const [dx,dy] of dirs) {
-        let c = countDirection(board, x, y, dx, dy, color);
-        if (c >= 5) return true;
-    }
-    return false;
-}
-
-function renderBoard() {
-    const tbl = document.getElementById("board");
-
-    for (let y=0; y<SIZE; y++) {
-        for (let x=0; x<SIZE; x++) {
-            const td = tbl.rows[y].cells[x];
-            td.innerHTML = "";
-            td.classList.remove("last-move");
-
-            const v = board[y][x];
-            if (v === BLACK) {
-                const s = document.createElement("div");
-                s.className = "stone black";
-                td.appendChild(s);
-            } else if (v === WHITE) {
-                const s = document.createElement("div");
-                s.className = "stone white";
-                td.appendChild(s);
-            } else if (currentPlayer === BLACK && isForbidden(board, x, y)) {
-                td.textContent = "B";
-            }
-        }
-    }
-
-    if (lastMove) {
-        tbl.rows[lastMove.y].cells[lastMove.x].classList.add("last-move");
-    }
-}
-
-function handleClick(x, y) {
-    if (gameOver) return;
-    if (currentPlayer !== humanColor) return;
-    if (board[y][x] !== EMPTY) return;
-
-    if (humanColor === BLACK && isForbidden(board, x, y)) return;
-
-    putStone(x, y, humanColor);
-
-    if (checkWin(x, y, humanColor)) {
-        gameOver = true;
-        document.getElementById("statusText").textContent = "사람 승리!";
-        return;
-    }
-
-    currentPlayer = aiColor;
-    document.getElementById("statusText").textContent = "AI 생각 중...";
-
-    setTimeout(() => {
-        const mv = aiMove(aiColor, 2); // 깊이2로 설정(속도/강함 밸런스)
-        if (!mv) return;
-
-        putStone(mv.x, mv.y, aiColor);
-
-        if (checkWin(mv.x, mv.y, aiColor)) {
-            gameOver = true;
-            document.getElementById("statusText").textContent = "AI 승리!";
-            return;
-        }
-
-        currentPlayer = humanColor;
-        document.getElementById("statusText").textContent = "당신 차례입니다.";
-    }, 50);
-}
-
-function initGame() {
-    board = Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
-    lastMove = null;
-    gameOver = false;
-
-    const first = document.querySelector("input[name='firstPlayer']:checked").value;
-    currentPlayer = BLACK;
-
-    if (first === "ai-black") {
-        humanColor = WHITE;
-        aiColor = BLACK;
-        currentPlayer = BLACK;
-    } else {
-        humanColor = BLACK;
-        aiColor = WHITE;
-        currentPlayer = BLACK;
-    }
-
-    const tbl = document.getElementById("board");
-    tbl.innerHTML = "";
-
-    for (let y=0; y<SIZE; y++) {
-        const tr = document.createElement("tr");
-        for (let x=0; x<SIZE; x++) {
-            const td = document.createElement("td");
-            td.dataset.x = x;
-            td.dataset.y = y;
-            td.onclick = () => handleClick(x,y);
-            tr.appendChild(td);
-        }
-        tbl.appendChild(tr);
-    }
-
-    renderBoard();
-}
-
-document.getElementById("resetBtn").onclick = initGame;
-window.onload = initGame;
