@@ -101,16 +101,16 @@ h1 {
 }
 
 
+
+
 /* ===========================================
    돌
 =========================================== */
-.point {
-    position: absolute;
-    width: 22px;     /* 정확한 클릭 영역 */
-    height: 22px;
-    transform: translate(-50%, -50%);
-    cursor: pointer;
+.stone {
+    width: calc(100% / 15 * 0.82);
+    height: calc(100% / 15 * 0.82);
 }
+
 
 
 
