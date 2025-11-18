@@ -235,7 +235,6 @@ function findNonForbiddenMove() {
    오목 AI (렌주룰 + Threat-Based)
 ============================================================ */
 
-const SIZE = 15;
 const EMPTY = 0;
 const BLACK = 1;
 const WHITE = 2;
@@ -761,3 +760,4 @@ window.onload = () => {
     document.documentElement.style.setProperty("--stone-size", stoneSize + "px");
     startGame();
 };
+
