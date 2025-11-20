@@ -399,6 +399,38 @@ function findWinning(color) {
     return null;
 }
 
+/* ============================================================
+   보드 평가 함수 (evalBoard)
+============================================================ */
+function evalBoard(me, opp) {
+    let score = 0;
+    const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+
+    for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+
+            const v = board[y][x];
+            if (v === EMPTY) continue;
+
+            for (const [dx, dy] of dirs) {
+                const c = countLine(x, y, dx, dy, v);
+
+                if (v === me) {
+                    if (c >= 5) score += 5000000;
+                    else if (c === 4) score += 60000;
+                    else if (c === 3) score += 3500;
+                    else if (c === 2) score += 80;
+                } else {
+                    if (c >= 5) score -= 8000000;
+                    else if (c === 4) score -= 90000;
+                    else if (c === 3) score -= 4500;
+                    else if (c === 2) score -= 100;
+                }
+            }
+        }
+    }
+    return score;
+}
 
 /* ============================================================
    유틸
@@ -414,4 +446,5 @@ window.onload = () => {
     document.getElementById("resetBtn").onclick = startGame;
     startGame();
 };
+
 
