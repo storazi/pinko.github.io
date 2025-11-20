@@ -1,97 +1,72 @@
-/* ==========================
-   기본 레이아웃
-========================== */
+/* 전체 배경 */
 body {
-    margin: 0;
+    background: #0b1426;
     padding: 20px;
-    background: #0b1426; /* 사이트 주 배경 */
-    font-family: "Pretendard", sans-serif;
     color: #eaf2ff;
+    font-family: "Pretendard", sans-serif;
 }
 
 h1 {
     text-align: center;
-    margin-bottom: 16px;
     color: #ffd447;
 }
 
-/* 옵션 바 */
 .option-bar {
     display: flex;
     justify-content: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
+    gap: 15px;
+    margin-bottom: 15px;
 }
 
-.option-bar label {
-    font-size: 14px;
-    color: #eaf2ff;
-}
-
-.option-bar button {
-    padding: 6px 12px;
-    font-size: 14px;
-    border-radius: 6px;
-    border: none;
-    background: #ffd447;
-    color: #0b1426;
-    cursor: pointer;
-}
-.option-bar button:hover {
-    background: #ffcd28;
-}
-
-/* 상태 */
+/* 상태창 */
 #statusBox {
     text-align: center;
-    margin-bottom: 12px;
-    font-size: 14px;
+    margin-bottom: 10px;
     color: #ffd447;
 }
 
-/* ==========================
-   보드
-========================== */
+/* ===========================
+   완전 정확한 교차점 보드
+=========================== */
 #boardWrapper {
     width: fit-content;
-    margin: 0 auto;
+    margin: auto;
+}
+
+/* 15×15 그리드 */
+#board {
+    width: 560px; 
+    height: 560px;
+    display: grid;
+    grid-template-columns: repeat(14, 40px);
+    grid-template-rows: repeat(14, 40px);
+    background: #11234a;
+    border: 1px solid #1e396e;
     position: relative;
 }
 
-#board {
-    width: 600px;
-    height: 600px;
-
-    /* 사이트 스타일 기반 보드 배경 */
-    background: #11234a;
-
-    /* 사이트의 라인 색 */
-    background-image:
-        linear-gradient(#1e396e 2px, transparent 2px),
-        linear-gradient(90deg, #1e396e 2px, transparent 2px);
+/* 세로선 */
+#board::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: 
+        linear-gradient(to right, #1e396e 2px, transparent 2px),
+        linear-gradient(to bottom, #1e396e 2px, transparent 2px);
     background-size: 40px 40px;
-
-    position: relative;
-    border-radius: 10px;
-    box-shadow: 0 0 12px rgba(0,0,0,0.6);
 }
 
 /* 교차점 클릭 영역 */
 .point {
     width: 40px;
     height: 40px;
-    position: absolute;
-    transform: translate(-50%, -50%);
-    cursor: pointer;
+    position: relative;
 }
 
-/* ==========================
-   돌 (사이트 색감 적용)
-========================== */
+/* 돌 */
 .stone {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     position: absolute;
     top: 50%;
@@ -100,7 +75,7 @@ h1 {
 }
 
 .black {
-    background: #0b0f18; /* 거의 검은 파랑 */
+    background: #0b0f18;
     box-shadow: 0 0 6px rgba(30,57,110,0.8);
 }
 
@@ -112,7 +87,9 @@ h1 {
 /* 금수 */
 .forbid {
     color: #ffd447;
-    font-weight: bold;
     font-size: 18px;
-    text-shadow: 0 0 4px rgba(0,0,0,0.8);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
