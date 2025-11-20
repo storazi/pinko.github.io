@@ -1,6 +1,8 @@
 /* ============================================================
-   🧠 Ultra Pro Renju AI (VCF/VCT/Threat-Based)
-   네 HTML/CSS 100% 호환 버전
+   🧠 Ultra Renju AI (최적 안정판)
+   ✔ VCF / VCT
+   ✔ 금수 정상 작동
+   ✔ HTML/CSS 100% 호환
 ============================================================ */
 
 const SIZE = 15;
@@ -58,6 +60,7 @@ function renderBoard() {
             if (v === BLACK) td.classList.add("black");
             else if (v === WHITE) td.classList.add("white");
 
+            // 금수는 흑 차례일 때만 표시
             if (turn === BLACK && v === EMPTY) {
                 if (isForbidden(x, y)) {
                     td.classList.add("forbid");
@@ -77,7 +80,6 @@ function onHumanClick(e) {
 
     const x = +e.target.dataset.x;
     const y = +e.target.dataset.y;
-
     if (board[y][x] !== EMPTY) return;
 
     if (humanColor === BLACK && isForbidden(x, y)) {
@@ -108,12 +110,11 @@ function startGame() {
     const fp = document.querySelector("input[name=firstPlayer]:checked").value;
     humanColor = (fp === "human") ? BLACK : WHITE;
     aiColor = (humanColor === BLACK) ? WHITE : BLACK;
-    turn = BLACK;
 
+    turn = BLACK;
     initBoard();
     createBoardUI();
     renderBoard();
-
     setStatus("게임 시작!");
 
     if (fp === "ai") aiStart();
@@ -125,13 +126,12 @@ function startGame() {
 async function aiStart() {
     if (gameOver) return;
 
-    await wait(80);
+    await wait(70);
 
-    // 첫 수는 랜덤 중앙 근처
+    // 첫 수 : 무조건 중앙
     if (board.flat().every(v => v === EMPTY)) {
-        const r = 6 + Math.floor(Math.random() * 3);
-        const c = 6 + Math.floor(Math.random() * 3);
-        board[r][c] = aiColor;
+        const c = 7;
+        board[c][c] = aiColor;
         turn = humanColor;
         renderBoard();
         return;
@@ -158,7 +158,7 @@ async function aiStart() {
 }
 
 /* ============================================================
-   AI 메인
+   AI 메인 로직
 ============================================================ */
 function aiMove() {
     const diff = document.querySelector("input[name=difficulty]:checked").value;
@@ -167,15 +167,15 @@ function aiMove() {
     const me = aiColor;
     const opp = humanColor;
 
-    // 즉승 체크
-    let w = findWinning(me);
-    if (w) return w;
+    // 즉승
+    let win = findWinning(me);
+    if (win) return win;
 
     // 즉패 방어
-    let b = findWinning(opp);
-    if (b) return b;
+    let block = findWinning(opp);
+    if (block) return block;
 
-    // 강제승리(VCT/VCF)
+    // 강제승리 탐색
     let vcf = searchVCF(me, depth);
     if (vcf) return vcf;
 
@@ -183,13 +183,12 @@ function aiMove() {
 }
 
 /* ============================================================
-   강제승리 탐색 (VCF/VCT)
+   VCF/VCT 탐색
 ============================================================ */
 function searchVCF(color, depth) {
     if (depth <= 0) return null;
 
     const moves = generateMoves(color);
-
     for (const mv of moves) {
         board[mv.y][mv.x] = color;
 
@@ -213,19 +212,18 @@ function searchVCF(color, depth) {
 ============================================================ */
 function searchNormal(me, opp, depth) {
     const moves = generateMoves(me);
-
     let best = null;
     let bestVal = -99999999;
 
     for (const mv of moves) {
         board[mv.y][mv.x] = me;
 
-        const val = -minSearch(opp, me, depth - 1, -999999, 999999);
+        const value = -minSearch(opp, me, depth - 1, -9999999, 9999999);
 
         board[mv.y][mv.x] = EMPTY;
 
-        if (val > bestVal) {
-            bestVal = val;
+        if (value > bestVal) {
+            bestVal = value;
             best = mv;
         }
     }
@@ -246,122 +244,122 @@ function minSearch(me, opp, depth, alpha, beta) {
             return -999999;
         }
 
-        let v = -minSearch(opp, me, depth - 1, -beta, -alpha);
+        const val = -minSearch(opp, me, depth - 1, -beta, -alpha);
 
         board[mv.y][mv.x] = EMPTY;
 
-        if (v > alpha) alpha = v;
+        if (val > alpha) alpha = val;
         if (alpha >= beta) break;
     }
     return alpha;
 }
 
 /* ============================================================
-   후보수 생성 (상위 20개)
+   후보군 생성
 ============================================================ */
 function generateMoves(color) {
     const arr = [];
 
-    for (let y=0;y<SIZE;y++) {
-        for (let x=0;x<SIZE;x++) {
+    for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
             if (board[y][x] !== EMPTY) continue;
-            if (!nearStone(x,y)) continue;
+            if (!nearStone(x, y)) continue;
 
-            // 금수 방지
-            if (color === BLACK && isForbidden(x,y)) continue;
+            if (color === BLACK && isForbidden(x, y)) continue;
 
-            const score = moveScore(x,y,color);
+            const score = moveScore(x, y, color);
             arr.push({ x, y, score });
         }
     }
 
-    arr.sort((a,b)=>b.score - a.score);
-    return arr.slice(0, 20);
+    arr.sort((a, b) => b.score - a.score);
+    return arr.slice(0, 16);   // 안정판: 16수만 탐색
 }
 
-function nearStone(x,y) {
-    for (let dy=-2; dy<=2; dy++)
-        for (let dx=-2; dx<=2; dx++) {
+function nearStone(x, y) {
+    for (let dy = -2; dy <= 2; dy++)
+        for (let dx = -2; dx <= 2; dx++) {
             const nx = x + dx, ny = y + dy;
-            if (inside(nx,ny) && board[ny][nx] !== EMPTY)
+            if (inside(nx, ny) && board[ny][nx] !== EMPTY)
                 return true;
         }
     return false;
 }
 
 /* ============================================================
-   카운트, 패턴, 평가
+   평가 보조 함수
 ============================================================ */
-function moveScore(x,y,c) {
-    let score = 0;
-    score += patternScore(x,y,c) * 2;
-    score += patternScore(x,y,3-c);
-    return score;
-}
-
-function patternScore(x, y, c) {
-    const dirs=[[1,0],[0,1],[1,1],[1,-1]];
-    let s = 0;
-
-    for (const [dx,dy] of dirs) {
-        const k = countLine(x,y,dx,dy,c);
-        if (k === 4) s += 8000;
-        else if (k === 3) s += 500;
-        else if (k === 2) s += 40;
-    }
+function moveScore(x, y, c) {
+    let s = patternScore(x, y, c) * 2;
+    s += patternScore(x, y, 3 - c);
     return s;
 }
 
-function countLine(x,y,dx,dy,c) {
+function patternScore(x, y, c) {
+    const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+    let score = 0;
+
+    for (const [dx, dy] of dirs) {
+        const len = countLine(x, y, dx, dy, c);
+        if (len === 4) score += 8000;
+        else if (len === 3) score += 500;
+        else if (len === 2) score += 40;
+    }
+    return score;
+}
+
+function countLine(x, y, dx, dy, c) {
     let cnt = 1;
+
     let nx = x + dx, ny = y + dy;
-    while (inside(nx,ny) && board[ny][nx] === c) {
+    while (inside(nx, ny) && board[ny][nx] === c) {
         cnt++; nx += dx; ny += dy;
     }
+
     nx = x - dx; ny = y - dy;
-    while (inside(nx,ny) && board[ny][nx] === c) {
+    while (inside(nx, ny) && board[ny][nx] === c) {
         cnt++; nx -= dx; ny -= dy;
     }
+
     return cnt;
 }
 
 function checkWin(c) {
-    const dirs=[[1,0],[0,1],[1,1],[1,-1]];
     for (let y=0;y<SIZE;y++)
         for (let x=0;x<SIZE;x++) {
             if (board[y][x] !== c) continue;
-            for (const [dx,dy] of dirs)
-                if (countLine(x,y,dx,dy,c) >= 5)
-                    return true;
+            if (countLine(x,y,1,0,c) >= 5) return true;
+            if (countLine(x,y,0,1,c) >= 5) return true;
+            if (countLine(x,y,1,1,c) >= 5) return true;
+            if (countLine(x,y,1,-1,c) >= 5) return true;
         }
     return false;
 }
 
 /* ============================================================
-   금수 규칙(렌주룰)
+   금수 판정
 ============================================================ */
-function isForbidden(x,y) {
-    if (board[y][x] !== EMPTY) return true;
+function isForbidden(x, y) {
+    if (board[y][x] !== EMPTY) return false;
 
     board[y][x] = BLACK;
 
-    const over5 =
+    const overline =
         countLine(x,y,1,0,BLACK) >= 6 ||
         countLine(x,y,0,1,BLACK) >= 6 ||
         countLine(x,y,1,1,BLACK) >= 6 ||
         countLine(x,y,1,-1,BLACK) >= 6;
 
-    const d3 = countOpenPattern(x,y,"01110") >= 2;
-    const d4 = countOpenPattern(x,y,"011110") >= 2;
+    const d3 = countOpenPattern(x, y, "01110") >= 2;
+    const d4 = countOpenPattern(x, y, "011110") >= 2;
 
     board[y][x] = EMPTY;
-
-    return over5 || d3 || d4;
+    return overline || d3 || d4;
 }
 
 function countOpenPattern(x,y,pat) {
     const dirs=[[1,0],[0,1],[1,1],[1,-1]];
-    let cnt = 0;
+    let cnt=0;
 
     for (const [dx,dy] of dirs) {
         let s="";
@@ -378,16 +376,13 @@ function countOpenPattern(x,y,pat) {
 }
 
 /* ============================================================
-   즉승 수 찾기 (findWinning)
+   즉승 판단
 ============================================================ */
 function findWinning(color) {
-    for (let y = 0; y < SIZE; y++) {
-        for (let x = 0; x < SIZE; x++) {
-
+    for (let y=0;y<SIZE;y++)
+        for (let x=0;x<SIZE;x++) {
             if (board[y][x] !== EMPTY) continue;
-
-            // 흑이면 금수 검사
-            if (color === BLACK && isForbidden(x, y)) continue;
+            if (color === BLACK && isForbidden(x,y)) continue;
 
             board[y][x] = color;
             const ok = checkWin(color);
@@ -395,40 +390,37 @@ function findWinning(color) {
 
             if (ok) return { x, y };
         }
-    }
     return null;
 }
 
 /* ============================================================
-   보드 평가 함수 (evalBoard)
+   보드 평가
 ============================================================ */
 function evalBoard(me, opp) {
-    let score = 0;
-    const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+    let score=0;
+    const dirs=[[1,0],[0,1],[1,1],[1,-1]];
 
-    for (let y = 0; y < SIZE; y++) {
-        for (let x = 0; x < SIZE; x++) {
-
+    for (let y=0;y<SIZE;y++)
+        for (let x=0;x<SIZE;x++) {
             const v = board[y][x];
             if (v === EMPTY) continue;
 
-            for (const [dx, dy] of dirs) {
-                const c = countLine(x, y, dx, dy, v);
+            for (const [dx,dy] of dirs) {
+                const len = countLine(x,y,dx,dy,v);
 
                 if (v === me) {
-                    if (c >= 5) score += 5000000;
-                    else if (c === 4) score += 60000;
-                    else if (c === 3) score += 3500;
-                    else if (c === 2) score += 80;
+                    if (len >= 5) score += 5000000;
+                    else if (len === 4) score += 60000;
+                    else if (len === 3) score += 3500;
+                    else if (len === 2) score += 80;
                 } else {
-                    if (c >= 5) score -= 8000000;
-                    else if (c === 4) score -= 90000;
-                    else if (c === 3) score -= 4500;
-                    else if (c === 2) score -= 100;
+                    if (len >= 5) score -= 8000000;
+                    else if (len === 4) score -= 90000;
+                    else if (len === 3) score -= 4500;
+                    else if (len === 2) score -= 100;
                 }
             }
         }
-    }
     return score;
 }
 
@@ -446,5 +438,3 @@ window.onload = () => {
     document.getElementById("resetBtn").onclick = startGame;
     startGame();
 };
-
-
