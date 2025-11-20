@@ -81,8 +81,9 @@ function onHumanClick(e) {
     if (gameOver) return;
     if (turn !== humanColor) return;
 
-    const x = Number(e.target.dataset.x);
-    const y = Number(e.target.dataset.y);
+    const x = Number(e.currentTarget.dataset.x);
+    const y = Number(e.currentTarget.dataset.y);
+
 
     if (!inside(x, y)) return;
     if (board[y][x] !== EMPTY) return;
@@ -319,3 +320,4 @@ function findWinning(c){
 /* ====================== 초기 실행 ====================== */
 
 startGame();
+
