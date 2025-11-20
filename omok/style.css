@@ -1,18 +1,18 @@
-/* ===============================
+/* ==========================
    기본 레이아웃
-=============================== */
+========================== */
 body {
     margin: 0;
     padding: 20px;
-    background: #f3f0e6;
+    background: #0b1426; /* 사이트 주 배경 */
     font-family: "Pretendard", sans-serif;
-    color: #333;
+    color: #eaf2ff;
 }
 
 h1 {
     text-align: center;
     margin-bottom: 16px;
-    color: #444;
+    color: #ffd447;
 }
 
 /* 옵션 바 */
@@ -24,34 +24,60 @@ h1 {
     margin-bottom: 12px;
 }
 
+.option-bar label {
+    font-size: 14px;
+    color: #eaf2ff;
+}
+
+.option-bar button {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: none;
+    background: #ffd447;
+    color: #0b1426;
+    cursor: pointer;
+}
+.option-bar button:hover {
+    background: #ffcd28;
+}
+
+/* 상태 */
 #statusBox {
     text-align: center;
     margin-bottom: 12px;
     font-size: 14px;
+    color: #ffd447;
 }
 
-/* ===============================
-   보드 영역
-=============================== */
+/* ==========================
+   보드
+========================== */
 #boardWrapper {
     width: fit-content;
     margin: 0 auto;
     position: relative;
 }
 
-/* 바둑판 (그리드만 표시) */
 #board {
     width: 600px;
     height: 600px;
-    background: #e8c77a;  /* 원목 밝은 톤 */
+
+    /* 사이트 스타일 기반 보드 배경 */
+    background: #11234a;
+
+    /* 사이트의 라인 색 */
     background-image:
-        linear-gradient(#b38742 2px, transparent 2px),
-        linear-gradient(90deg, #b38742 2px, transparent 2px);
-    background-size: 40px 40px; /* 선간격 */
+        linear-gradient(#1e396e 2px, transparent 2px),
+        linear-gradient(90deg, #1e396e 2px, transparent 2px);
+    background-size: 40px 40px;
+
     position: relative;
+    border-radius: 10px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.6);
 }
 
-/* 교차점 */
+/* 교차점 클릭 영역 */
 .point {
     width: 40px;
     height: 40px;
@@ -60,10 +86,12 @@ h1 {
     cursor: pointer;
 }
 
-/* 돌 */
+/* ==========================
+   돌 (사이트 색감 적용)
+========================== */
 .stone {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     position: absolute;
     top: 50%;
@@ -72,18 +100,19 @@ h1 {
 }
 
 .black {
-    background: #262626;
-    box-shadow: 0 0 6px rgba(0,0,0,0.4);
+    background: #0b0f18; /* 거의 검은 파랑 */
+    box-shadow: 0 0 6px rgba(30,57,110,0.8);
 }
 
 .white {
-    background: #fafafa;
-    box-shadow: 0 0 6px rgba(0,0,0,0.3);
+    background: #eaf2ff;
+    box-shadow: 0 0 6px rgba(255,255,255,0.5);
 }
 
 /* 금수 */
 .forbid {
-    color: #b00000;
+    color: #ffd447;
     font-weight: bold;
     font-size: 18px;
+    text-shadow: 0 0 4px rgba(0,0,0,0.8);
 }
