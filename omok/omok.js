@@ -47,24 +47,47 @@ function createBoardUI() {
    보드 렌더링
 ============================================================ */
 function renderBoard() {
-    const tbl = document.getElementById("board");
+    const boardDiv = document.getElementById("board");
+    boardDiv.innerHTML = ""; // 초기화
 
     for (let y = 0; y < SIZE; y++) {
         for (let x = 0; x < SIZE; x++) {
-            const td = tbl.rows[y].cells[x];
-            td.className = "";
-            td.textContent = "";
 
+            const px = x * 40 + 20; // 중앙
+            const py = y * 40 + 20;
+
+            // 클릭 영역 (교차점)
+            const p = document.createElement("div");
+            p.className = "point";
+            p.style.left = px + "px";
+            p.style.top = py + "px";
+            p.dataset.x = x;
+            p.dataset.y = y;
+            p.addEventListener("click", onHumanClick);
+            boardDiv.appendChild(p);
+
+            // 돌 그리기
             const v = board[y][x];
+            if (v !== EMPTY) {
+                const stone = document.createElement("div");
+                stone.classList.add("stone");
+                if (v === BLACK) stone.classList.add("black");
+                else stone.classList.add("white");
 
-            if (v === BLACK) td.classList.add("black");
-            else if (v === WHITE) td.classList.add("white");
+                p.appendChild(stone);
+            }
 
-            // 금수는 흑 차례일 때만 표시
-            if (turn === BLACK && v === EMPTY) {
+            // 금수 표시
+            if (turn === BLACK && board[y][x] === EMPTY) {
                 if (isForbidden(x, y)) {
-                    td.classList.add("forbid");
-                    td.textContent = "X";
+                    const mark = document.createElement("div");
+                    mark.classList.add("forbid");
+                    mark.textContent = "X";
+                    mark.style.position = "absolute";
+                    mark.style.top = "50%";
+                    mark.style.left = "50%";
+                    mark.style.transform = "translate(-50%, -50%)";
+                    p.appendChild(mark);
                 }
             }
         }
@@ -438,3 +461,4 @@ window.onload = () => {
     document.getElementById("resetBtn").onclick = startGame;
     startGame();
 };
+
